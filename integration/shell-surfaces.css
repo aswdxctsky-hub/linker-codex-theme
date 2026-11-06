@@ -1,4 +1,4 @@
-/* Verified against the shell selectors in OpenAI.Codex 26.1029.7803.0. */
+/* Shell selectors checked in OpenAI.Codex 26.1029.7803.0 and 26.1029.9216.0. */
 html[data-linker-pearl="v4"] #root [data-app-shell-main-surface="default"],
 html[data-linker-pearl="v4"] #root .WorkspaceContent-dnr6uY,
 html[data-linker-pearl="v4"] #root .WorkspaceContent-dnr6uY::before,

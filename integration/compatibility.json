@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "packageFamily": "OpenAI.Codex_2p2nqsd0c76g0",
+  "builds": [
+    {
+      "version": "26.1029.7803.0",
+      "platform": "win32-x64",
+      "appAsarSha256": "77ed4ddc5b388ac8b29f5035f9c98f982b095df55aad6fa6c27bb80d763b9691",
+      "runtimeRevision": 1
+    },
+    {
+      "version": "26.1029.9216.0",
+      "platform": "win32-x64",
+      "appAsarSha256": "d9af2d0789de280e7e3b8409a4b7a2e96d6e2731ea729eb0430968301fd80708",
+      "runtimeRevision": 2
+    }
+  ]
+}

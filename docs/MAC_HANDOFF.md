@@ -27,6 +27,8 @@
 
 ## Windows 接入事实
 
+2026-11-06 后续维护增加了 `26.1029.9216.0` 适配、校验缓存和分批素材传输，详见 [UPDATES.md](UPDATES.md)。复用新版运行时须同时复用 `media-delivery.mjs` 的传输协议，或一次性传完整 `media`（保持向后兼容）。`compatibility.json` 当前仅包含 Windows 记录，不可拿它放行 Mac。
+
 - 测试通过的 Store 包：`OpenAI.Codex 26.1029.7803.0`。
 - 应用 ASAR SHA-256：`77ed4ddc5b388ac8b29f5035f9c98f982b095df55aad6fa6c27bb80d763b9691`。仅用于识别 Windows 基线，不是 Mac 允许列表。
 - Node 启动官方可执行文件，传入 `--remote-debugging-pipe`；父进程通过额外 stdio 管道与 Chromium 通信，未开放 TCP 调试端口。
