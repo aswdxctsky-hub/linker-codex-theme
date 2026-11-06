@@ -1,0 +1,6 @@
+{
+  "duration": 8,
+  "source_image": "dragon-greeting.png",
+  "model": "heygen-video-1",
+  "prompt": "Create an 8-second single-shot anime greeting from this exact first frame. Preserve the same adult white dragon woman, face, white hair, horns, costume, silver knot ornaments and pale lavender wings exactly. Locked frontal camera and unchanged high-key near-white virtual background. 0-0.7s: gentle eye contact. 0.7-2s: she closes her eyes and makes a small polite bow from the shoulders and neck, hands remain gracefully clasped, hair falls subtly forward. 2-2.5s: rises naturally, opens her eyes with a warm restrained smile. 2.5-7.5s: looking into the camera she speaks in a soft clear adult female Mandarin voice, exactly: '欢迎回来，Skyler。很高兴，再次与你连接。' Pronounce Skyler as the English name, SKY-ler. Natural accurate small mouth movements with the spoken line. Tiny breathing and hair/wing settling. 7.5-8s: hold a peaceful smile. This is elegant quiet anime acting, not exaggerated, not dancing. No cuts, no camera movements, no head turns, no zoom, no large wing motion. No text, no subtitles, no UI, no logos, no extra people, no music. The only audio is the gentle spoken Chinese greeting with a clean recording. Preserve delicate anime linework rather than changing to photorealism."
+}

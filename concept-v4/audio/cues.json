@@ -1,0 +1,167 @@
+[
+  {
+    "id": "access",
+    "language": "zh",
+    "text": "连接已建立。等待访问许可。",
+    "source_start": 0,
+    "source_end": 2.91,
+    "duration": 3.0145,
+    "file": "audio/zh/access.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "iris",
+    "language": "zh",
+    "text": "启动虹膜扫描。",
+    "source_start": 2.94,
+    "source_end": 4.43,
+    "duration": 1.5945,
+    "file": "audio/zh/iris.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "identity",
+    "language": "zh",
+    "text": "身份匹配，Skyler。请确认登录。",
+    "source_start": 4.58,
+    "source_end": 7.62,
+    "duration": 3.1445,
+    "file": "audio/zh/identity.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "request",
+    "language": "zh",
+    "text": "访问请求已接收。",
+    "source_start": 7.79,
+    "source_end": 9.48,
+    "duration": 1.7945,
+    "file": "audio/zh/request.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "permissions",
+    "language": "zh",
+    "text": "正在读取会话权限。",
+    "source_start": 9.97,
+    "source_end": 11.9,
+    "duration": 2.0345,
+    "file": "audio/zh/permissions.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "verified",
+    "language": "zh",
+    "text": "核验完成。访问权限已解锁。",
+    "source_start": 12,
+    "source_end": 14.62,
+    "duration": 2.7245,
+    "file": "audio/zh/verified.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "session",
+    "language": "zh",
+    "text": "会话已建立。",
+    "source_start": 14.66,
+    "source_end": 16.22,
+    "duration": 1.6645,
+    "file": "audio/zh/session.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "access",
+    "language": "en",
+    "text": "Connection established. Awaiting access clearance.",
+    "source_start": 0,
+    "source_end": 3.78,
+    "duration": 3.8845,
+    "file": "audio/en/access.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "iris",
+    "language": "en",
+    "text": "Initiating iris scan.",
+    "source_start": 3.8,
+    "source_end": 5.9,
+    "duration": 2.2045,
+    "file": "audio/en/iris.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "identity",
+    "language": "en",
+    "text": "Identity matched. Skyler. Confirm login.",
+    "source_start": 5.96,
+    "source_end": 9.77,
+    "duration": 3.9145,
+    "file": "audio/en/identity.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "request",
+    "language": "en",
+    "text": "Access request received.",
+    "source_start": 9.78,
+    "source_end": 11.55,
+    "duration": 1.8745,
+    "file": "audio/en/request.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "permissions",
+    "language": "en",
+    "text": "Reading session permissions.",
+    "source_start": 11.57,
+    "source_end": 13.34,
+    "duration": 1.8745,
+    "file": "audio/en/permissions.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "verified",
+    "language": "en",
+    "text": "Verification complete. Access unlocked.",
+    "source_start": 13.35,
+    "source_end": 16.4,
+    "duration": 3.1545,
+    "file": "audio/en/verified.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "session",
+    "language": "en",
+    "text": "Session established.",
+    "source_start": 16.41,
+    "source_end": 18.29,
+    "duration": 1.9845,
+    "file": "audio/en/session.wav",
+    "effect": "ring-74hz-chorus-dual-delay",
+    "speed": 1.0
+  },
+  {
+    "id": "greeting",
+    "language": "en",
+    "text": "Welcome back, Skyler. Good to see you again.",
+    "source_start": 18.48,
+    "source_end": 21.368163265306123,
+    "duration": 2.8881666666666668,
+    "file": "audio/en/greeting.wav",
+    "effect": "original",
+    "speed": 1.0
+  }
+]

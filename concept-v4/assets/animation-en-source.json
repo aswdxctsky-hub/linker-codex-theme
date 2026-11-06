@@ -1,0 +1,11 @@
+{
+  "mode": "precision",
+  "voice": "Lowenna - Clear & Reassuring",
+  "voice_id": "43242ecbb86842d7b5af1c2dad0dbd16",
+  "spoken_text": "Welcome back, Skyler. Good to see you again.",
+  "audio_start_seconds": 2.5,
+  "duration_seconds": 8,
+  "enable_dynamic_duration": false,
+  "enable_speech_enhancement": false,
+  "note": "New catalog speech replaces the audio; only lip synchronization is generated. No voice cloning."
+}

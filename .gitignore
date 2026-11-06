@@ -1,0 +1,29 @@
+# Generated artifacts
+concept-v4/preview.html
+concept-v4/output/
+integration/bundle/
+integration/verification/
+integration/research/
+integration/*profile*/
+integration/probe-*/
+probe-runs/
+*.zip
+
+# Machine and account state
+.codex/
+node_modules/
+__pycache__/
+.DS_Store
+Thumbs.db
+*.log
+*.lock
+*.sqlite*
+*.db
+.env
+.env.*
+config.json
+state.json
+installation.json
+manifest.json
+*.lnk
+*.reg

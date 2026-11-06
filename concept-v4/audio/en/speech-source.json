@@ -1,0 +1,185 @@
+{
+  "duration": 21.368163265306123,
+  "word_timestamps": [
+    {
+      "word": "<start>",
+      "start": 0,
+      "end": 0
+    },
+    {
+      "word": "Connection",
+      "start": 0.299,
+      "end": 0.5547
+    },
+    {
+      "word": "established.",
+      "start": 0.811,
+      "end": 1.493
+    },
+    {
+      "word": "Awaiting",
+      "start": 1.707,
+      "end": 2.176
+    },
+    {
+      "word": "access",
+      "start": 2.389,
+      "end": 2.6027
+    },
+    {
+      "word": "clearance.",
+      "start": 2.901,
+      "end": 3.627
+    },
+    {
+      "word": "Initiating",
+      "start": 3.968,
+      "end": 4.437
+    },
+    {
+      "word": "iris",
+      "start": 4.693,
+      "end": 5.0347
+    },
+    {
+      "word": "scan.",
+      "start": 5.163,
+      "end": 5.739
+    },
+    {
+      "word": "Identity",
+      "start": 6.144,
+      "end": 6.5707
+    },
+    {
+      "word": "matched.",
+      "start": 6.699,
+      "end": 7.296
+    },
+    {
+      "word": "Skyler.",
+      "start": 7.637,
+      "end": 8.405
+    },
+    {
+      "word": "Confirm",
+      "start": 8.704,
+      "end": 9.088
+    },
+    {
+      "word": "login.",
+      "start": 9.216,
+      "end": 9.698
+    },
+    {
+      "word": "Access",
+      "start": 9.881,
+      "end": 10.222
+    },
+    {
+      "word": "request",
+      "start": 10.308,
+      "end": 10.5638
+    },
+    {
+      "word": "received.",
+      "start": 10.734,
+      "end": 11.374
+    },
+    {
+      "word": "Reading",
+      "start": 11.758,
+      "end": 12.014
+    },
+    {
+      "word": "session",
+      "start": 12.1,
+      "end": 12.27
+    },
+    {
+      "word": "permissions.",
+      "start": 12.441,
+      "end": 13.188
+    },
+    {
+      "word": "Verification",
+      "start": 13.508,
+      "end": 14.062
+    },
+    {
+      "word": "complete.",
+      "start": 14.276,
+      "end": 14.83
+    },
+    {
+      "word": "Access",
+      "start": 15.214,
+      "end": 15.598
+    },
+    {
+      "word": "unlocked.",
+      "start": 15.641,
+      "end": 16.281
+    },
+    {
+      "word": "Session",
+      "start": 16.537,
+      "end": 16.8358
+    },
+    {
+      "word": "established.",
+      "start": 17.006,
+      "end": 18.094
+    },
+    {
+      "word": "Welcome",
+      "start": 18.756,
+      "end": 19.054
+    },
+    {
+      "word": "back,",
+      "start": 19.097,
+      "end": 19.332
+    },
+    {
+      "word": "Skyler.",
+      "start": 19.396,
+      "end": 19.865
+    },
+    {
+      "word": "Good",
+      "start": 20.036,
+      "end": 20.1638
+    },
+    {
+      "word": "to",
+      "start": 20.206,
+      "end": 20.2918
+    },
+    {
+      "word": "see",
+      "start": 20.334,
+      "end": 20.462
+    },
+    {
+      "word": "you",
+      "start": 20.505,
+      "end": 20.5478
+    },
+    {
+      "word": "again.",
+      "start": 20.633,
+      "end": 21.131
+    },
+    {
+      "word": "<end>",
+      "start": 21.368163265306123,
+      "end": 21.368163265306123
+    }
+  ],
+  "engine": "orca",
+  "submitted_text": "Connection established. Awaiting access clearance.\nInitiating iris scan.\nIdentity matched. Skyler. Confirm login.\nAccess request received.\nReading session permissions.\nVerification complete. Access unlocked.\nSession established.\nWelcome back, Skyler. Good to see you again.",
+  "voice_id": "43242ecbb86842d7b5af1c2dad0dbd16",
+  "voice_name": "Lowenna - Clear & Reassuring",
+  "requested_engine": "saved default"
+}

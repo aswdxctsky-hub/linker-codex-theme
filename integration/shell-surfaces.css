@@ -1,0 +1,30 @@
+/* Verified against the shell selectors in OpenAI.Codex 26.1029.7803.0. */
+html[data-linker-pearl="v4"] #root [data-app-shell-main-surface="default"],
+html[data-linker-pearl="v4"] #root .WorkspaceContent-dnr6uY,
+html[data-linker-pearl="v4"] #root .WorkspaceContent-dnr6uY::before,
+html[data-linker-pearl="v4"] #root .MainContentViewport-OinMfT {
+  background-color: transparent !important;
+}
+
+html[data-linker-pearl="v4"] #root .LeftPanel-e8ghK3:not([data-slate-sidebar-peeking="true"]) {
+  background-color: rgba(247, 250, 253, .26) !important;
+}
+html[data-linker-pearl="v4"] #root .LeftPanel-e8ghK3:not([data-slate-sidebar-peeking="true"]) .sidebar-navigation,
+html[data-linker-pearl="v4"] #root .LeftPanel-e8ghK3:not([data-slate-sidebar-peeking="true"]) [data-slate-sidebar-content] {
+  background-color: transparent !important;
+}
+
+html[data-linker-pearl="v4"] #root [data-app-shell-focus-area="right-panel"] {
+  --app-shell-panel-background: transparent !important;
+  background-color: rgba(247, 250, 253, .34) !important;
+}
+html[data-linker-pearl="v4"] #root [data-app-shell-main-titlebar] {
+  background-color: rgba(247, 250, 253, .30) !important;
+  backdrop-filter: blur(12px);
+}
+
+/* Keep the input surface readable without covering the conversation around it. */
+html[data-linker-pearl="v4"] #root .ComposerLayoutRoot-XCKS7O:is([data-composer-surface-variant="default"], [data-composer-surface-variant="opaque"]) {
+  --composer-layout-surface-background: rgba(250, 252, 255, .84) !important;
+  --composer-layout-surface-backdrop-filter: blur(16px) !important;
+}
