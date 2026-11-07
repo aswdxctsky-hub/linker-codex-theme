@@ -1,0 +1,32 @@
+import {readFile,writeFile,mkdir,access} from 'node:fs/promises';
+import {generateKeyPairSync,createPublicKey,sign} from 'node:crypto';
+import {gzip} from 'node:zlib';
+import {promisify} from 'node:util';
+import {join,dirname,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {digest,safeVersion,REPO} from './release-store.mjs';
+
+const root=dirname(fileURLToPath(import.meta.url)),version=safeVersion(process.argv[2]||'0.5.0');
+const keyFolder=join(process.env.LOCALAPPDATA,'Linker','ReleaseSigning');await mkdir(keyFolder,{recursive:true});
+const privatePath=join(keyFolder,'release-private.pem');
+try{await access(privatePath);}catch{const keys=generateKeyPairSync('ed25519');await writeFile(privatePath,keys.privateKey.export({type:'pkcs8',format:'pem'}),{flag:'wx',mode:0o600});}
+const privateKey=await readFile(privatePath,'utf8'),publicKey=createPublicKey(privateKey).export({type:'spki',format:'pem'});
+const oldPublic=await readFile(join(root,'release-public.pem'),'utf8').catch(()=>null);
+if(oldPublic&&createPublicKey(oldPublic).export({type:'spki',format:'pem'})!==publicKey)throw Error('Signing key does not match the pinned public key');
+await writeFile(join(root,'release-public.pem'),publicKey);
+const sources=['manager.mjs','launcher.mjs','release-store.mjs','compatibility.mjs','windows-context.mjs','windows-processes.mjs','auto-compatibility.mjs','progress-window.mjs','pipe-client.mjs','media-delivery.mjs','shell-contract.json'];
+const fileBytes={};for(const name of sources)fileBytes[name]=await readFile(join(root,name));
+for(const name of ['runtime.js','ProgressWindow.exe'])fileBytes[name]=await readFile(join(root,'bundle',name));
+const files=Object.fromEntries(Object.entries(fileBytes).map(([name,bytes])=>[name,{sha256:digest(bytes),bytes:bytes.length}]));
+const payload={files:Object.fromEntries(Object.entries(fileBytes).map(([name,bytes])=>[name,bytes.toString('base64')]))};
+const compress=promisify(gzip),packed=await compress(Buffer.from(JSON.stringify(payload)),{level:9});
+const media=await readFile(join(root,'bundle/media.json')),compressedMedia=await compress(media,{level:9});
+const output=join(root,'dist',version);await mkdir(output,{recursive:true});
+const packageName='linker-runtime-'+version+'-win-x64.json.gz',mediaName='linker-media-'+digest(media).slice(0,12)+'.json.gz';
+const base='https://github.com/'+REPO+'/releases/download/win-v'+version+'/';
+const manifest={schema:1,version,platform:'win32-x64',bootstrapProtocol:1,files,package:{url:base+packageName,sha256:digest(packed),bytes:packed.length},media:{url:base+mediaName,sha256:digest(compressedMedia),bytes:compressedMedia.length,contentSha256:digest(media),contentBytes:media.length}};
+const text=JSON.stringify(manifest),envelope={payload:text,signature:sign(null,Buffer.from(text),privateKey).toString('base64')};
+await writeFile(join(output,packageName),packed);await writeFile(join(output,mediaName),compressedMedia);await writeFile(join(output,'linker-windows-release.json'),JSON.stringify(envelope,null,2));
+await mkdir(join(output,'runtime'),{recursive:true});for(const [name,bytes] of Object.entries(fileBytes))await writeFile(join(output,'runtime',name),bytes);
+await writeFile(join(output,'runtime/release.json'),JSON.stringify(envelope));
+console.log(JSON.stringify({version,output,files:Object.keys(files).length,runtimeBytes:packed.length,mediaBytes:compressedMedia.length,publicKeyFingerprint:digest(Buffer.from(publicKey))}));

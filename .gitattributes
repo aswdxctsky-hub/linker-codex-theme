@@ -1,5 +1,7 @@
 * text=auto
 *.mjs text eol=lf
+*.cs text eol=lf
+*.pem text eol=lf
 *.js text eol=lf
 *.py text eol=lf
 *.md text eol=lf

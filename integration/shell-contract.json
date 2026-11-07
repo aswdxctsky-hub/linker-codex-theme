@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "verifiedVersions": [
+    "26.1103.3517.0"
+  ],
+  "selectors": {
+    "WorkspaceContent-dnr6uY": [
+      "fb29ac0880ea684341dc45f9d0a548e4debbc8869f5e4448227fa6c7aa72add2"
+    ],
+    "MainContentViewport-OinMfT": [
+      "884cdd0c3535994782c739b4274ecfb9c0a41b26c009eb18eefddab253085378"
+    ],
+    "LeftPanel-e8ghK3": [
+      "f0d6bc0224ba77a618333a80c908507916da5a4c1fce2ffa296c347666958b04"
+    ],
+    "ComposerLayoutRoot-XCKS7O": [
+      "c03d74e18df5849e825adc7b940d856c554e999ed52d11376a0caeab45c1892a"
+    ],
+    "data-app-shell-main-surface": [
+      "70e967c78260e134d14619cdd15cfe42201c2d5c26f9cd07c1130c392252ca89"
+    ]
+  }
+}

@@ -29,5 +29,14 @@ archive-cache.json
 compatibility-cache.json
 update-notice.json
 *.tmp
+integration/dist/
+integration/release-work/
+*.private.pem
+release-private.pem
+local-compatibility.json
+boot-status.json
+current.json
+pending.json
+update-state.json
 *.lnk
 *.reg

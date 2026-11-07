@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import {mkdtemp,readFile,writeFile,access} from 'node:fs/promises';
+import {generateKeyPairSync,sign} from 'node:crypto';
+import {gzipSync} from 'node:zlib';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {digest,decodeManifest,installRuntime,verifyVersion,activate,prepareMedia,latestRelease,LATEST_URL,REPO,download,validAssetUrl} from './release-store.mjs';
+import {checkContract,SHELL_SELECTORS} from './auto-compatibility.mjs';
+const root=await mkdtemp(join(tmpdir(),'linker-update-test-')),{privateKey,publicKey}=generateKeyPairSync('ed25519');
+const names=['manager.mjs','launcher.mjs','runtime.js','ProgressWindow.exe','shell-contract.json'];
+function release(version){
+ const bytes=Object.fromEntries(names.map(n=>[n,Buffer.from(n+' '+version)]));
+ const packed=gzipSync(Buffer.from(JSON.stringify({files:Object.fromEntries(Object.entries(bytes).map(([n,b])=>[n,b.toString('base64')]))})));
+ const media=Buffer.from(JSON.stringify({images:{background:'data:image/png;base64,AA==',logo:'data:image/png;base64,AA=='},voices:{}})),compressed=gzipSync(media);
+ const url='https://github.com/'+REPO+'/releases/download/win-v'+version+'/';
+ const manifest={schema:1,version,platform:'win32-x64',bootstrapProtocol:1,files:Object.fromEntries(Object.entries(bytes).map(([n,b])=>[n,{sha256:digest(b),bytes:b.length}])),package:{url:url+'runtime.json.gz',sha256:digest(packed),bytes:packed.length},media:{url:url+'media.json.gz',sha256:digest(compressed),bytes:compressed.length,contentSha256:digest(media),contentBytes:media.length}};
+ const payload=JSON.stringify(manifest),envelope={payload,signature:sign(null,Buffer.from(payload),privateKey).toString('base64')};
+ return {manifest,envelope,packed,compressed};
+}
+const old=release('0.5.0'),next=release('0.5.1');let calls=0;
+const fetcher=async url=>{calls++;if(url===next.manifest.package.url)return new Response(next.packed);if(url===old.manifest.package.url)return new Response(old.packed);if(url.endsWith('media.json.gz'))return new Response(next.compressed);throw Error('Unexpected URL');};
+await installRuntime(root,old,publicKey,{fetcher});await activate(root,'0.5.0');
+await installRuntime(root,next,publicKey,{fetcher});assert.equal(JSON.parse(await readFile(join(root,'current.json'))).version,'0.5.0');
+await verifyVersion(join(root,'versions','0.5.1'),publicKey);await activate(root,'0.5.1');assert.deepEqual(JSON.parse(await readFile(join(root,'current.json'))),{version:'0.5.1',previous:'0.5.0'});
+await activate(root,'0.5.0');assert.equal(JSON.parse(await readFile(join(root,'current.json'))).version,'0.5.0');
+const invalid={...next.envelope,payload:next.envelope.payload.replace('0.5.1','0.5.9')};assert.throws(()=>decodeManifest(invalid,publicKey),/signature/);
+const unsafe={...next.manifest,files:{...next.manifest.files,'../escape.mjs':{sha256:'a'.repeat(64),bytes:1}}};let payload=JSON.stringify(unsafe);assert.throws(()=>decodeManifest({payload,signature:sign(null,Buffer.from(payload),privateKey).toString('base64')},publicKey),/file/);
+const bad=release('0.5.2');await assert.rejects(()=>installRuntime(root,bad,publicKey,{fetcher:async()=>new Response(Buffer.from('partial'))}),/Incomplete|verification/);await assert.rejects(()=>access(join(root,'versions','0.5.2')));assert.equal(JSON.parse(await readFile(join(root,'current.json'))).version,'0.5.0');
+await writeFile(join(root,'versions','0.5.1','runtime.js'),'tampered');await assert.rejects(()=>verifyVersion(join(root,'versions','0.5.1'),publicKey),/verification/);
+await prepareMedia(root,old.manifest,{fetcher});const count=calls;assert.equal((await prepareMedia(root,next.manifest,{fetcher})).reused,true);assert.equal(calls,count);
+await assert.rejects(()=>download('https://example.invalid',{maxBytes:3,fetcher:async()=>new Response('too big')}),/size limit/);
+assert.throws(()=>validAssetUrl('https://example.invalid/remote.exe'),/Untrusted/);
+const releaseIndex=[{tag_name:'mac-v9.0.0',assets:[]},{tag_name:'win-v0.5.1',draft:true,assets:[]},{tag_name:'win-v0.5.0',draft:false,prerelease:false,assets:[{name:'linker-windows-release.json',browser_download_url:old.manifest.package.url.replace('runtime.json.gz','release.json')}]}];
+const latest=await latestRelease(publicKey,{fetcher:async url=>new Response(JSON.stringify(url===LATEST_URL?releaseIndex:old.envelope))});assert.equal(latest.manifest.version,'0.5.0');
+const actual=Object.fromEntries(SHELL_SELECTORS.map(n=>[n,{count:1,sha256:'a'.repeat(64)}])),contract={schema:1,selectors:Object.fromEntries(SHELL_SELECTORS.map(n=>[n,['a'.repeat(64)]]))};assert.equal(checkContract(actual,contract),true);assert.throws(()=>checkContract({...actual,[SHELL_SELECTORS[0]]:{count:1,sha256:'b'.repeat(64)}},contract),/layout changed/);
+console.log(JSON.stringify({passed:true,signedInstallAndActivation:true,previousVersionRetained:true,badSignatureRejected:true,pathTraversalRejected:true,partialDownloadDoesNotActivate:true,tamperedFilesRejected:true,mediaReused:true,windowsChannelSeparated:true,changedShellRejected:true}));

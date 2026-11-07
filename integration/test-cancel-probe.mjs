@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {ensureCompatible} from './auto-compatibility.mjs';
+import {verifyVersion} from './release-store.mjs';
+import {windowsContext} from './windows-context.mjs';
+import {readJson} from './compatibility.mjs';
+const root=resolve('integration/verification','cancel-probe-'+Date.now());await mkdir(root,{recursive:true});
+const key=await readFile('integration/release-public.pem','utf8'),release=await verifyVersion(resolve('integration/dist/0.5.0/runtime'),key),pkg=(await windowsContext()).package;
+const abort=new AbortController();let pid;
+const ui={update(value){if(value.probePid){pid=value.probePid;queueMicrotask(()=>abort.abort(Error('Test original selection')));}}};
+await assert.rejects(()=>ensureCompatible({root,pkg,release,mediaPath:resolve('integration/bundle/media.json'),ui,signal:abort.signal,force:true}));
+assert.ok(pid);assert.equal(await readJson(join(root,'local-compatibility.json'),null),null);
+let alive=true;try{process.kill(pid,0);}catch{alive=false;}assert.equal(alive,false);
+const result={passed:true,probeCancelled:true,noCompatibilityApproval:true,ownedProbeExited:true};await writeFile(join(root,'result.json'),JSON.stringify(result));console.log(JSON.stringify(result));

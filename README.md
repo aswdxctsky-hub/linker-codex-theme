@@ -2,7 +2,7 @@
 
 瓷白与冰蓝的科幻启动仪式，配合白龙娘问候、双语机械音声和贯穿对话窗口的透明背景。
 
-**Windows 已在用户的真实账户上运行；`26.1029.9216.0` 更新适配已通过隔离实机测试。macOS 尚未适配，接手请先读 [MAC_HANDOFF.md](docs/MAC_HANDOFF.md)。**
+**Windows v0.5.0 已适配 `OpenAI.Codex 26.1103.3517.0`，支持签名更新包、首次遇到新版时的本机兼容验证，以及独立的启动等待窗口。** macOS 由 [macos-adaptation 分支](https://github.com/aswdxctsky-hub/linker-codex-theme/tree/macos-adaptation) 单独接续，本轮没有改动或验证 Mac 实现。
 
 ## 当前效果
 
@@ -14,46 +14,40 @@
 - 保留原生聊天、项目、侧栏和编辑器；认证与权限文字只是开场演出，不调用摄像头、不授予真实权限。
 - 当前示例素材以 **Skyler** 为问候对象，姓名已包含在预录音声与角色口型中。
 
-## 构建和预览
+## 启动与更新
 
-需要 Python 3.10+；启动器和检查脚本使用 Node.js 22+。使用现成素材构建不需要 API Key、付费服务或 npm 依赖。
+已有可用版本时直接启动，后台查询并下载新的签名主题包，下一次冷启动验证后启用。官方应用版本变化，或已有新主题包待启用时，独立等待窗口先完成必要的下载、校验与本机测试，再衔接开场。下载显示实际字节进度；检查和验证显示扫描线。
+
+未知 Codex 版本先比对主题依赖的界面规则，再在独立资料目录实际挂载、撤回，通过才缓存结果。布局变化或测试失败时进入原版，等待维护者发布适配。主题更新使用固定公钥验证签名，保留上一版用于回退。
+
+这些操作更新的是**主题程序**。Codex 本体继续由其官方安装渠道更新。详细流程、边界与测量见 [更新与启动速度](docs/UPDATES.md)。
+
+## 安装和预览
+
+这是个人定制源码，Windows 入口准备仍有原机器的路径约定；不是任意电脑的一键安装器。已有安装可沿用原有任务栏图标，不额外创建快捷方式。安装、恢复与诊断见 [Windows 说明](integration/README.md)。
+
+独立预览需要 Python 3.10+，无需 API Key、付费服务或 npm 依赖：
 
 ```sh
 python3 concept-v4/build.py
-python3 integration/build.py
-node --check integration/bundle/runtime.js
-```
-
-生成的 `concept-v4/preview.html` 可离线打开。也可启动仅限本机的预览服务：
-
-```sh
 python3 -m http.server 8767 --bind 127.0.0.1 --directory concept-v4
 ```
 
-访问 `http://127.0.0.1:8767/preview.html`。独立预览末尾的聊天是演示；实际安装使用原生应用界面。
+访问 `http://127.0.0.1:8767/preview.html`。预览末尾的聊天是演示；实际安装使用原生应用界面。
 
 ## 代码位置
 
 | 路径 | 用途 |
 | --- | --- |
-| `concept-v4/app.js` | 已确认的流程、绘制、音声和角色转场 |
-| `concept-v4/assets/`、`audio/` | 构建所需的本地图像、视频及双语音声 |
-| `concept-v4/preview.template.html` | 独立预览外壳 |
-| `integration/runtime.template.js` | 注入真实应用的主题、开场与恢复控制 |
-| `integration/shell-surfaces.css` | 对话主面板透明和侧栏底色修正 |
-| `integration/build.py` | 生成 `bundle/runtime.js` 与 `bundle/media.json` |
-| `integration/pipe-client.mjs` | 私有调试管道协议客户端 |
-| `integration/launcher.mjs` | 当前 Windows 启动器、版本校验、配置保存与恢复 |
-| `integration/install.ps1`、`entrypoints.ps1` | 当前 Windows 安装及任务栏入口处理 |
-| `docs/MAC_HANDOFF.md` | Mac 实机接续所需的已知事实、边界和验收目标 |
-
-## Windows 状态
-
-当前兼容 `OpenAI.Codex 26.1029.7803.0` 和 `26.1029.9216.0`，应用内名称可能显示为 ChatGPT。旧版已获用户确认，新版已验证中英完整开场、重播、跳过、恢复、启动器挂载和原生背景样式。安装包未修改，启动时由外部启动器通过私有管道挂载主题。
-
-启动器会自动获取本仓库已经验证的兼容记录。未知版本、文件校验不符或取不到记录时打开原版；不会自动改版本号放行。应用文件未变化时复用校验结果，开场首屏先加载约 1.95 MB 图像，视频与音声随后传入。详情见 [更新与启动速度](docs/UPDATES.md)。
-
-这是一份已运行的个人项目源码，Windows 安装脚本仍有原机器的入口约定，**不是适用于任意电脑的一键安装器**。具体依赖见 [Windows 说明](integration/README.md)。不要只替换版本号或散列值来绕过兼容检查。
+| `concept-v4/app.js`、`assets/`、`audio/` | 已确认的流程、图像、视频与双语音声 |
+| `integration/runtime.template.js`、`shell-surfaces.css` | 原生应用内的开场、背景与恢复控制 |
+| `integration/bootstrap.mjs` | 稳定入口、签名验证、版本选择与中断回退 |
+| `integration/manager.mjs`、`release-store.mjs` | 更新下载、版本目录与启用流程 |
+| `integration/auto-compatibility.mjs`、`shell-contract.json` | 应用结构检查、独立挂载与撤回测试 |
+| `integration/ProgressWindow.cs` | 独立于 Codex 的等待与下载进度窗口 |
+| `integration/launcher.mjs`、`media-delivery.mjs` | 私有管道挂载、分批素材传输与配置保存 |
+| `integration/fetch-release.mjs`、`install-release.mjs` | 获取签名发行版、备份安装 |
+| `docs/MAC_HANDOFF.md` | Mac 接续的设计、已知事实和验收边界 |
 
 ## 素材与署名
 

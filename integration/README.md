@@ -1,50 +1,70 @@
 # Windows 接入说明
 
-当前源码来自一个已在真实 Windows 账户运行的个人安装。用户已确认开场和透明背景正常。Mac 适配见 `../docs/MAC_HANDOFF.md`。
+v0.5.0 对应本轮验证的官方 Store 包 `OpenAI.Codex 26.1103.3517.0`。原有视觉、双语开场与角色动画保持一致。应用包、登录资料和聊天数据库不由安装器改写。
 
-## 构建
+## 安装
 
-从仓库根目录运行：
+需要 Windows x64、Node.js 22+、系统自带的 Windows PowerShell 与 .NET Framework 4.x，以及官方 Codex Store 包。安装发行版无需 Python、编译器或签名私钥。
 
-```sh
-python3 integration/build.py
-node --check integration/bundle/runtime.js
+在仓库根目录运行：
+
+```powershell
+$release = node integration/fetch-release.mjs | ConvertFrom-Json
+& integration/install.ps1 -Bundle $release.bundle
 ```
 
-生成 `bundle/runtime.js` 与 `bundle/media.json`；后者较大，由已提交的本地素材构建，不提交生成结果。
+下载程序只接受本仓库 Windows 频道、固定公钥验证通过的发行版。安装目录为 `%LOCALAPPDATA%\Linker\CodexTheme`；已有安装先完整备份到相邻 `Linker\Backups`。保留语言、声音和启用状态。
 
-## 当前安装器的边界
+原机器已有的任务栏固定项仍指向同一个 `launch.vbs`，安装后直接复用，不增加日常入口。`entrypoints.ps1` 首次准备入口时仍从桌面 `produce/Codex.lnk` 取得官方快捷方式；新机器需先核对这一约定。安装器只准备内部快捷方式，不自动固定到任务栏。开始菜单中的官方注册入口保持原样。
 
-安装器使用 PowerShell 7、Node.js 和官方 Store 包，放行 `compatibility.json` 中版本与文件散列均匹配的构建。当前包括 Windows `26.1029.7803.0` 与 `26.1029.9216.0`。
+应用已经运行时，点击入口会聚焦现有窗口；完整退出应用后，下一次从任务栏打开才播放新开场。安装本身不关闭当前应用。
 
-`entrypoints.ps1` 当前从用户桌面 `produce/Codex.lnk` 取得原始官方快捷方式，并保存副本用于恢复。这是原机器的约定；新机器需要先找到实际官方入口并适配，不能直接假定该路径存在。
+## 日常启动
 
-`install.ps1` 将主题复制到 `%LOCALAPPDATA%/Linker/CodexTheme` 并准备内部快捷方式。**固定到任务栏是独立步骤，脚本不会自动完成。** 原机器已将任务栏固定项替换为此入口，沿用官方名称与图标。开始菜单中的官方注册入口保持原样。
+1. 独立窗口立即显示连接状态。
+2. 已验证过的应用与主题组合直接启动。后台获取新发行版，完成签名、散列校验后暂存，下一次启动再验证启用。
+3. 首次遇到新的官方版本，或有待启用主题包时，在等待窗口里完成下载与本机兼容验证。
+4. 通过后播放原有开场、进入对话。失败时使用仍兼容的旧主题；旧主题也不兼容则打开原版。
 
-已有原版应用在后台时，启动器会提示完整退出后再打开。Windows 已验证的冷启动修复见 `windows-processes.mjs` 和 `test-startup.mjs`。
+`config.json` 可设置 `autoUpdate: false` 关闭在线主题更新。历史设置 `autoCompatibility: false` 也视为关闭在线查询。断网时仍可使用已安装的兼容主题，或在本机验证新的官方版本。
 
-## 自动兼容与性能
+## 恢复与诊断
 
-未知版本会查询本仓库的兼容记录，最多等待 2.5 秒；已匹配的本地记录直接使用。自动获取的是数据，不是可执行脚本。可在安装目录 `config.json` 中设置 `autoCompatibility: false` 关闭网络查询。
+等待窗口的「本次使用原版 / Original」只跳过本次主题，可按 Esc 使用；不会永久关闭主题。
 
-`archive-cache.json` 记录已完整校验的应用文件身份；文件路径、大小、修改时间、变更时间或预期散列变化后重新校验。`node launcher.mjs --diagnose --full-check` 可强制完整校验。主题自己的文件每次仍核验完整性。
+开场「原版 / Original」、主题菜单「恢复原界面」及 Ctrl + Alt + Shift + L 会保存 `enabled=false`，并把本启动器管理的任务栏快捷方式恢复为官方入口。维护用 `restore.vbs` 留在安装目录，不额外放到桌面。
 
-首屏先传背景和图标，后续素材分批准备；原有两套音声、视频与演出时长保持不变。自动适配的边界和实测数据见 `../docs/UPDATES.md`。
+在安装目录运行：
 
-## 恢复
+```powershell
+node bootstrap.mjs --diagnose
+node bootstrap.mjs --update-only
+node bootstrap.mjs --update-only --force-probe
+node bootstrap.mjs --restore
+```
 
-开场「原版 / Original」、主题菜单「恢复原界面」以及 Ctrl + Alt + Shift + L 均可撤回主题。恢复会保存 `enabled=false`，并将本启动器管理的任务栏快捷方式换回保留的官方入口。维护用 `restore.vbs` 保留在安装目录中，不额外放到桌面。
+`--diagnose` 只报告实际包版本、主题签名和本机兼容缓存；`--update-only` 获取更新并验证，不启动正式账户窗口；`--force-probe` 强制重新验证。测试窗口使用独立资料目录。详见 [更新实现](../docs/UPDATES.md)。
 
-主题样式只改变运行时显示；应用包、登录资料与聊天数据库未被修改。卸载前先恢复，再退出主题启动的应用，最后处理安装目录。
+## 开发与发布
+
+```powershell
+python integration/build.py
+& integration/build-progress.ps1
+node integration/build-release.mjs 0.5.0
+```
+
+发布构建需要维护者本机签名密钥，保存在 `%LOCALAPPDATA%\Linker\ReleaseSigning`，不进入仓库或发行资产。已有公钥不匹配时构建停止；普通安装只需公钥。发布后的版本号及其签名内容不可复用或改写。
+
+把 `integration/dist/<version>/` 中的压缩运行时、压缩素材和 `linker-windows-release.json` 上传到 `win-v<version>` 的 GitHub Release。只有正式 Windows 标签参与自动更新；Mac 标签与预发布不参与。升级稳定入口协议或轮换公钥需单独安装，运行时更新不能替换信任根。
 
 ## 验证脚本
 
-- `node integration/test-startup.mjs`：Windows 的零匹配、单进程、多进程解析检查。
-- `node integration/test-compatibility.mjs`：兼容记录获取、缓存、离线回退、拒绝错误记录及文件变化后重新校验。
-- `node integration/test-launcher.mjs`：独立安装目录中的真实新版启动、校验缓存和停用持久化。
-- `node integration/verify-version.mjs <官方可执行文件> <标签>`：真实隔离窗口中完整开场、重播、跳过和恢复；标签含 `english` 时验证英文。
-- `node integration/check-shell-surfaces.mjs <本机提取的原生CSS目录>`：背景透明、文字和控件可读性及撤回的独立样式测试。
-- `test-install.mjs <官方可执行文件>`：Windows 独立资料窗口中的挂载、播放、撤回测试，会生成本地截图与检查结果。
-- `inspect-host.mjs <官方可执行文件>`：Windows 独立资料窗口中的样式与根节点检查。
+- `node integration/test-release-store.mjs`：签名、分阶段安装、下载中断、文件篡改、素材复用及结构变化拒绝。
+- `node integration/test-bootstrap.mjs`：启用中断回退、损坏版本回退、重复启动锁。
+- `node integration/test-launcher.mjs`：真实独立资料窗口中的首次兼容验证、缓存启动、语言保留与恢复持久化。
+- `node integration/test-cancel-probe.mjs`：取消本机验证后，仅结束自己的测试进程，不保存通过记录。
+- `node integration/test-startup.mjs`：Windows 零匹配、单进程、多进程解析。
+- `node integration/verify-version.mjs <官方可执行文件> <标签>`：完整开场、重播、跳过及恢复；标签含 `english` 时验证英文。
+- `node integration/check-shell-surfaces.mjs <本机原生CSS目录>`：背景透明、控件可读性及样式撤回。
 
-实机测试脚本含 Windows 进程清理逻辑，不能直接当作 Mac 验证脚本使用。测试资料、浏览器资料、日志、账户状态与机器截图不在公开仓库内。
+`test-compatibility.mjs` 与 `compatibility.json` 保留为旧 v2 启动器的数据查询回归，不是 v0.5.0 的更新入口。所有实机测试资料、日志、提取的应用代码和截图仅保存在本地。

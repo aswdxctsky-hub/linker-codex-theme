@@ -6,7 +6,7 @@
 
 用户希望日常尽量沿用原有应用图标，不新增桌面入口。Windows 已通过替换任务栏固定项实现；**Mac 的 Dock 与应用启动不能照搬这个办法，需实机确认**。不要未经检查便改官方 `.app`、签名、Dock 数据或登录项，也不要宣称 Dock 同图标或更新兼容已实现。
 
-本次仅发布 Windows 已完成的实现与素材。没有在 Windows 上编写或验证 Mac 启动器；不要将本交接文档视为 Mac 已完成适配的证据。
+Windows 主线现为 v0.5.0；Mac 在 `macos-adaptation` 分支独立接续。本轮没有在 Windows 上编写或验证 Mac 启动器，也没有改动该分支；不要将本交接文档视为 Mac 已完成适配的证据。
 
 ## 从哪里开始
 
@@ -26,6 +26,8 @@
 - 不要为 Mac 接入重新设计已确认的流程、替换素材或增加模拟聊天页面。
 
 ## Windows 接入事实
+
+2026-11-08 主线增加 `26.1103.3517.0` 实机适配、签名主题包更新、本机兼容验证及 WPF 等待窗口，详见 [UPDATES.md](UPDATES.md)。`launcher.mjs` 现导出 `startSession`，稳定入口为 `bootstrap.mjs`。Mac 可参考更新状态机，但不能直接运行 Windows 包检测、WPF 窗口或测试清理逻辑。Windows 发行标签为 `win-v<version>`，Mac 应独立命名与验证，避免两端互取更新。
 
 2026-11-06 后续维护增加了 `26.1029.9216.0` 适配、校验缓存和分批素材传输，详见 [UPDATES.md](UPDATES.md)。复用新版运行时须同时复用 `media-delivery.mjs` 的传输协议，或一次性传完整 `media`（保持向后兼容）。`compatibility.json` 当前仅包含 Windows 记录，不可拿它放行 Mac。
 
