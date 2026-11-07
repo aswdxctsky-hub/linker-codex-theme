@@ -3,6 +3,7 @@ import {createHash,verify} from 'node:crypto';
 import {gunzip} from 'node:zlib';
 import {promisify} from 'node:util';
 import {join} from 'node:path';
+import {setTimeout as delay} from 'node:timers/promises';
 import {readJson,atomicJson,sha256} from './compatibility.mjs';
 
 export const REPO='aswdxctsky-hub/linker-codex-theme';
@@ -39,15 +40,21 @@ export async function download(url,{maxBytes,expectedBytes,expectedHash,signal,o
  return bytes;
 }
 export async function latestRelease(publicKey,{signal,fetcher=fetch}={}){
- const response=await fetcher(LATEST_URL,{headers:{Accept:'application/vnd.github+json','User-Agent':'Linker-Codex-Theme'},signal:AbortSignal.any([...(signal?[signal]:[]),AbortSignal.timeout(3500)])});
+ for(let attempt=0;attempt<2;attempt++){
+  try{return await lookupRelease(publicKey,{signal,fetcher});}
+  catch(error){if(signal?.aborted||attempt===1||!(['TypeError','TimeoutError','AbortError'].includes(error.name)||error.retryable))throw error;await delay(500,undefined,{signal});}
+ }
+}
+async function lookupRelease(publicKey,{signal,fetcher}){
+ const response=await fetcher(LATEST_URL,{headers:{Accept:'application/vnd.github+json','User-Agent':'Linker-Codex-Theme'},signal:AbortSignal.any([...(signal?[signal]:[]),AbortSignal.timeout(8000)])});
  if(response.status===404)return null;
- if(!response.ok)throw Error('Release lookup HTTP '+response.status);
+ if(!response.ok){const error=Error('Release lookup HTTP '+response.status);error.retryable=response.status===429||response.status>=500;throw error;}
  const text=await response.text();if(text.length>512*1024)throw Error('Release metadata too large');
  const releases=JSON.parse(text);if(!Array.isArray(releases))throw Error('Invalid release index');
  const release=releases.filter(r=>!r.draft&&!r.prerelease&&/^win-v\d+\.\d+\.\d+$/.test(r.tag_name)&&r.assets?.some(a=>a.name==='linker-windows-release.json')).sort((a,b)=>compareVersions(b.tag_name.slice(5),a.tag_name.slice(5)))[0];
  if(!release)return null;
  const asset=release.assets.find(a=>a.name==='linker-windows-release.json');
- const bytes=await download(validAssetUrl(asset.browser_download_url),{maxBytes:128*1024,signal,fetcher,timeout:3500});
+ const bytes=await download(validAssetUrl(asset.browser_download_url),{maxBytes:128*1024,signal,fetcher,timeout:10000});
  const envelope=JSON.parse(bytes.toString('utf8')),manifest=decodeManifest(envelope,publicKey);
  if(release.tag_name!=='win-v'+manifest.version)throw Error('Release tag mismatch');
  validAssetUrl(manifest.package.url);validAssetUrl(manifest.media.url);

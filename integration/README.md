@@ -1,6 +1,6 @@
 # Windows 接入说明
 
-v0.5.0 对应本轮验证的官方 Store 包 `OpenAI.Codex 26.1103.3517.0`。原有视觉、双语开场与角色动画保持一致。应用包、登录资料和聊天数据库不由安装器改写。
+v0.5.1 对应本轮验证的官方 Store 包 `OpenAI.Codex 26.1103.3517.0`。原有视觉、双语开场与角色动画保持一致。应用包、登录资料和聊天数据库不由安装器改写。
 
 ## 安装
 
@@ -16,6 +16,8 @@ $release = node integration/fetch-release.mjs | ConvertFrom-Json
 下载程序只接受本仓库 Windows 频道、固定公钥验证通过的发行版。安装目录为 `%LOCALAPPDATA%\Linker\CodexTheme`；已有安装先完整备份到相邻 `Linker\Backups`。保留语言、声音和启用状态。
 
 原机器已有的任务栏固定项仍指向同一个 `launch.vbs`，安装后直接复用，不增加日常入口。`entrypoints.ps1` 首次准备入口时仍从桌面 `produce/Codex.lnk` 取得官方快捷方式；新机器需先核对这一约定。安装器只准备内部快捷方式，不自动固定到任务栏。开始菜单中的官方注册入口保持原样。
+
+官方图标提取到本地固定路径，已有受管理的任务栏项仅刷新图标位置与应用标识，避免 Store 清理旧版本目录后失去图标；修改前保存该固定项的副本。
 
 应用已经运行时，点击入口会聚焦现有窗口；完整退出应用后，下一次从任务栏打开才播放新开场。安装本身不关闭当前应用。
 
@@ -50,7 +52,7 @@ node bootstrap.mjs --restore
 ```powershell
 python integration/build.py
 & integration/build-progress.ps1
-node integration/build-release.mjs 0.5.0
+node integration/build-release.mjs 0.5.1
 ```
 
 发布构建需要维护者本机签名密钥，保存在 `%LOCALAPPDATA%\Linker\ReleaseSigning`，不进入仓库或发行资产。已有公钥不匹配时构建停止；普通安装只需公钥。发布后的版本号及其签名内容不可复用或改写。
@@ -63,6 +65,7 @@ node integration/build-release.mjs 0.5.0
 - `node integration/test-bootstrap.mjs`：启用中断回退、损坏版本回退、重复启动锁。
 - `node integration/test-launcher.mjs`：真实独立资料窗口中的首次兼容验证、缓存启动、语言保留与恢复持久化。
 - `node integration/test-cancel-probe.mjs`：取消本机验证后，仅结束自己的测试进程，不保存通过记录。
+- `node integration/test-online-update.mjs`：从 GitHub 真实下载、验签、启用并启动；加 `--background` 验证后台下载和下次冷启动启用。需要已发布 v0.5.1 与维护者本机的 0.4.99 测试包，不发布测试版本。
 - `node integration/test-startup.mjs`：Windows 零匹配、单进程、多进程解析。
 - `node integration/verify-version.mjs <官方可执行文件> <标签>`：完整开场、重播、跳过及恢复；标签含 `english` 时验证英文。
 - `node integration/check-shell-surfaces.mjs <本机原生CSS目录>`：背景透明、控件可读性及样式撤回。

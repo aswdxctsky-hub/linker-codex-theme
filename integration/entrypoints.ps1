@@ -25,15 +25,33 @@ if($Action -eq 'Prepare') {
   Copy-Item -LiteralPath $originalSource -Destination $originalLink
  }
  $package=Get-AppxPackage -Name OpenAI.Codex | Select-Object -First 1
+ $iconLocation=(Join-Path $package.InstallLocation 'app\ChatGPT.exe')+',0'
+ # Keep the official icon in a stable local path; Store version directories disappear.
+ try {
+  Add-Type -AssemblyName System.Drawing
+  $officialIcon=[Drawing.Icon]::ExtractAssociatedIcon((Join-Path $package.InstallLocation 'app\ChatGPT.exe'))
+  if($officialIcon){
+   $stableIcon=Join-Path $root 'Codex.ico'
+   $iconStream=[IO.File]::Create($stableIcon)
+   try{$officialIcon.Save($iconStream)}finally{$iconStream.Dispose();$officialIcon.Dispose()}
+   $iconLocation=$stableIcon+',0'
+  }
+ } catch { Write-Warning 'Using the application icon directly.' }
  $link=$wsh.CreateShortcut($internalLink)
  $link.TargetPath=Join-Path $env:WINDIR 'System32\wscript.exe'
  $link.Arguments='"'+(Join-Path $root 'launch.vbs')+'"'
  $link.WorkingDirectory=$root
- $link.IconLocation=(Join-Path $package.InstallLocation 'app\ChatGPT.exe')+',0'
+ $link.IconLocation=$iconLocation
  $link.Description='Codex'
  $link.WindowStyle=7
  $link.Save()
  [Linker.ShortcutIdentity]::Set($internalLink,$appId)
+ foreach($pin in @(Get-ManagedPins)) {
+  $pinBackup=Join-Path $root ('entry-backups\'+[IO.Path]::GetFileName($pin))
+  if(-not(Test-Path -LiteralPath $pinBackup)){New-Item -ItemType Directory -Path (Split-Path -Parent $pinBackup) -Force | Out-Null;Copy-Item -LiteralPath $pin -Destination $pinBackup}
+  $pinnedLink=$wsh.CreateShortcut($pin);$pinnedLink.IconLocation=$iconLocation;$pinnedLink.Save()
+  [Linker.ShortcutIdentity]::Set($pin,$appId)
+ }
  @{shortcut=$internalLink;appId=[Linker.ShortcutIdentity]::Get($internalLink);ready=$true}|ConvertTo-Json -Compress
 } elseif($Action -eq 'Restore') {
  if(-not(Test-Path -LiteralPath $originalLink)){'{"restored":false,"reason":"no-managed-entry"}';exit 0}

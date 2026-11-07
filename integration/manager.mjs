@@ -42,7 +42,7 @@ export async function runManager({installRoot,stateRoot,testRoot,current,publicK
  }
  ui.events.on('original',()=>{abort.abort(Error('Original requested'));ui.close();if(pkg)original('user-request').catch(()=>{});});
  ui.events.on('failure',error=>log('waiting-window-error',error.message));
- const lookup=!diagnostic&&config.enabled!==false&&config.autoUpdate!==false?latestRelease(publicKey,{signal:abort.signal}).catch(async error=>{await log('update-unavailable',error.message);return null;}):Promise.resolve(null);
+ const lookup=!diagnostic&&config.enabled!==false&&config.autoUpdate!==false?latestRelease(publicKey,{signal:abort.signal}).catch(async error=>{if(!abort.signal.aborted)await log('update-unavailable',error.message);return null;}):Promise.resolve(null);
  try{
   const context=await windowsContext(null);pkg=context.package;await log('launch-request',diagnostic?'diagnose':testRoot?'isolated-test':'launch');
   if(originalChosen)return;

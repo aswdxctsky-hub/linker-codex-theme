@@ -6,7 +6,7 @@ import {join,dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {digest,safeVersion,REPO} from './release-store.mjs';
 
-const root=dirname(fileURLToPath(import.meta.url)),version=safeVersion(process.argv[2]||'0.5.0');
+const root=dirname(fileURLToPath(import.meta.url)),version=safeVersion(process.argv[2]||'0.5.1');
 const keyFolder=join(process.env.LOCALAPPDATA,'Linker','ReleaseSigning');await mkdir(keyFolder,{recursive:true});
 const privatePath=join(keyFolder,'release-private.pem');
 try{await access(privatePath);}catch{const keys=generateKeyPairSync('ed25519');await writeFile(privatePath,keys.privateKey.export({type:'pkcs8',format:'pem'}),{flag:'wx',mode:0o600});}
