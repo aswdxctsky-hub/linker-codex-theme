@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "bundleIdentifier": "com.openai.codex",
+  "builds": [
+    {
+      "version": "26.1103.32239",
+      "build": "25471",
+      "platform": "darwin-arm64",
+      "appAsarSha256": "8e55cbc7f0b7797ca1972cbf6d8b37f26dd8b79d0613235bc7448905a3bc7a2b",
+      "runtimeRevision": 1,
+      "validation": "isolated-native"
+    }
+  ]
+}

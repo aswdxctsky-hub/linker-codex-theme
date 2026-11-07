@@ -144,7 +144,8 @@ function skip(){
   enter(CHAT,performance.now());$("preview-menu").hidden=true;$("menu-toggle").setAttribute("aria-expanded","false");
 }
 function text(s,x,y,size=24,color=P.ink,opts={}){
-  ctx.save();ctx.font=(opts.weight||400)+" "+size+'px '+(opts.font||'"Microsoft YaHei","Segoe UI",sans-serif');
+  const font=/Mac/.test(navigator.platform)?(opts.font?'-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif':'"PingFang SC",-apple-system,sans-serif'):(opts.font||'"Microsoft YaHei","Segoe UI",sans-serif');
+  ctx.save();ctx.font=(opts.weight||400)+" "+size+'px '+font;
   ctx.textBaseline="alphabetic";ctx.textAlign=opts.align||"center";ctx.fillStyle=color;
   ctx.globalAlpha*=opts.alpha===undefined?1:opts.alpha;ctx.fillText(s,x,y);ctx.restore();
 }

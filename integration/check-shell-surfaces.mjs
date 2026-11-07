@@ -5,7 +5,8 @@ import {readFile,writeFile,mkdir,readdir} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {launchPipe} from './pipe-client.mjs';
 
-const output=resolve('integration/verification/background');
+const mac=process.platform==='darwin';
+const output=resolve('integration/verification/background'+(mac?'-macos':''));
 await mkdir(output,{recursive:true});
 const cssRoot=process.argv[2];
 if(!cssRoot)throw Error('Supply a directory containing CSS extracted from the current official application.');
@@ -13,11 +14,17 @@ const runtime=await readFile('integration/bundle/runtime.js','utf8');
 const media=JSON.parse(await readFile('integration/bundle/media.json','utf8'));
 const themeCss=runtime.match(/theme\.textContent=`([\s\S]*?)`;/)[1].replace('${MEDIA.images.background}',media.images.background);
 const nativeCss=(await Promise.all((await readdir(cssRoot)).filter(n=>n.endsWith('.css')).map(n=>readFile(join(cssRoot,n),'utf8')))).join('\n');
-const html=`<!doctype html><html data-codex-os="win32" data-codex-window-type="electron"><head><style>
+const html=`<!doctype html><html lang="zh-CN" data-codex-os="${mac?'darwin':'win32'}" data-codex-window-type="electron"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
 :root{--color-surface:#fff;--color-surface-secondary:#f7f7f7;--color-surface-elevated-secondary:#f5f5f5;--color-surface-elevated:#fff;--color-text:#263440;--color-border:#d8e1e7;--app-shell-titlebar-height:0px;--inset-toolbar:0px;--radius-xl-base:12px;--spacing:4px}
 *{box-sizing:border-box}body{margin:0;font:15px 'Segoe UI','Microsoft YaHei',sans-serif;color:#263440}#root{height:900px;display:grid;grid-template-columns:250px 1fr 260px;gap:14px;padding:40px 16px 16px}.MainContentSurface-EnuIYE{position:relative;border-radius:12px}.WorkspaceContent-dnr6uY{position:relative;isolation:isolate;height:100%;padding:36px}header{padding:20px}aside{padding:25px;border-radius:12px}.sidebar-navigation{height:100%}.message{line-height:1.9;margin:38px 0}.ComposerLayoutRoot-XCKS7O{position:absolute;bottom:30px;left:35px;right:35px;padding:24px;border-radius:20px}.native-code{padding:20px;background:var(--codeblock-background-color,#f4f4f4);border-radius:8px}.native-menu{padding:24px;background:var(--color-surface-elevated);border-radius:12px}
 ${nativeCss}</style></head><body><div id="root"><aside class="LeftPanel-e8ghK3"><nav class="sidebar-navigation">ChatGPT<br><br>新聊天<br><br>设计 GPT 应用启动动画</nav></aside><main data-app-shell-unified-tab-strip="true" class="PageSurfaceLayout-oqnRfB"><section data-app-shell-main-surface="default" class="MainContentSurface-EnuIYE" style="height:100%"><div class="WorkspaceContent-dnr6uY"><header data-app-shell-main-titlebar>对话背景预览</header><div class="message">同一张背景延续到对话区域。<br>文字保持原有清晰度，输入区域保留适当遮罩。</div><pre class="native-code">const theme = 'pearl';</pre><div class="ComposerLayoutRoot-XCKS7O" data-composer-surface-variant="default">输入消息…</div></div></section></main><aside data-app-shell-focus-area="right-panel"><div class="native-menu">来源与菜单</div></aside></div></body></html>`;
-const browser=launchPipe('C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',['--headless=new','--no-first-run','--no-default-browser-check','--disable-extensions','--user-data-dir='+join(output,'browser')]);
+if(process.argv.includes('--export-only')){
+ await writeFile(join(output,'fixture-before.html'),html);
+ await writeFile(join(output,'fixture-after.html'),html.replace('<html ', '<html data-linker-pearl="v4" ').replace('</head>','<style>'+themeCss+'</style></head>'));
+ console.log(JSON.stringify({scope:'extracted CSS fixture only',before:join(output,'fixture-before.html'),after:join(output,'fixture-after.html')}));
+}else{
+ if(mac)throw Error('Use --export-only on macOS and inspect the fixture in a browser. Owl does not support Target.createTarget.');
+ const browser=launchPipe('C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',['--headless=new','--no-first-run','--no-default-browser-check','--disable-extensions','--user-data-dir='+join(output,'browser')]);
 let result;
 try{
  await browser.call('Browser.getVersion');
@@ -49,3 +56,4 @@ try{
  await writeFile(join(output,'css-check.json'),JSON.stringify(result,null,2));
  console.log(JSON.stringify({passed:true,mainAndUnderlayTransparent:true,controlsReadable:true,layoutUnchanged:true,restorationPassed:true}));
 }finally{await browser.call('Browser.close').catch(()=>{});browser.disconnect();}
+}

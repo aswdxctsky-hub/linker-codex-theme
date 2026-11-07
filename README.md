@@ -2,7 +2,7 @@
 
 瓷白与冰蓝的科幻启动仪式，配合白龙娘问候、双语机械音声和贯穿对话窗口的透明背景。
 
-**Windows 已在用户的真实账户上运行；`26.1029.9216.0` 更新适配已通过隔离实机测试。macOS 尚未适配，接手请先读 [MAC_HANDOFF.md](docs/MAC_HANDOFF.md)。**
+**Windows 已在用户的真实账户上运行；`26.1029.9216.0` 更新适配已通过隔离实机测试。Mac 首版已接入真实应用的隔离窗口，正式账户与 Dock 仍待验收，见 [Mac 状态](docs/MAC_STATUS.md) 和 [Mac 使用说明](integration/macos/README.md)。**
 
 ## 当前效果
 
@@ -16,7 +16,7 @@
 
 ## 构建和预览
 
-需要 Python 3.10+；启动器和检查脚本使用 Node.js 22+。使用现成素材构建不需要 API Key、付费服务或 npm 依赖。
+使用现成素材构建需要 Python 3.9+；启动器和检查脚本使用 Node.js 22+。不需要 API Key、付费服务或 npm 依赖。当前 Mac 可使用官方应用随附的 Node，详见 [Mac 构建](integration/macos/README.md)。
 
 ```sh
 python3 concept-v4/build.py
@@ -45,6 +45,8 @@ python3 -m http.server 8767 --bind 127.0.0.1 --directory concept-v4
 | `integration/pipe-client.mjs` | 私有调试管道协议客户端 |
 | `integration/launcher.mjs` | 当前 Windows 启动器、版本校验、配置保存与恢复 |
 | `integration/install.ps1`、`entrypoints.ps1` | 当前 Windows 安装及任务栏入口处理 |
+| `integration/macos/` | Mac 启动器、独立兼容记录、构建打包与隔离验证 |
+| `docs/MAC_STATUS.md` | Mac 当前证据、使用边界与待验收项 |
 | `docs/MAC_HANDOFF.md` | Mac 实机接续所需的已知事实、边界和验收目标 |
 
 ## Windows 状态

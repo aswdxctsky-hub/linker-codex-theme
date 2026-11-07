@@ -8,6 +8,8 @@ integration/*profile*/
 integration/probe-*/
 probe-runs/
 *.zip
+release/
+*.dmg
 
 # Machine and account state
 .codex/
