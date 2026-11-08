@@ -71,7 +71,7 @@ node integration/build-release.mjs 0.6.0
 - `node integration/test-cold-start.mjs`：官方应用独立资料的真实启动，进程树强制结束后重复恢复、重复点击与完整撤回。上述测试不等同于重启整台电脑。
 - `node integration/test-launcher.mjs`：真实独立资料窗口中的首次兼容验证、缓存启动、语言保留与恢复持久化。
 - `node integration/test-cancel-probe.mjs`：取消本机验证后，仅结束自己的测试进程，不保存通过记录。
-- `node integration/test-online-update.mjs`：从 GitHub 真实下载、验签、启用并启动；加 `--background` 验证后台下载和下次冷启动启用。需要已发布 v0.6.0 与维护者本机的 0.4.99 测试包，不发布测试版本。
+- `node integration/test-online-update.mjs`：从 GitHub 真实下载、验签、启用并启动；加 `--background` 验证后台下载和下次冷启动启用。需要已发布 v0.6.0 与维护者本机的 0.5.2 测试包，不发布测试版本。
 - `node integration/test-startup.mjs`：Windows 零匹配、单进程、多进程解析。
 - `node integration/verify-version.mjs <官方可执行文件> <标签>`：完整开场、重播、跳过及恢复；标签含 `english` 时验证英文。
 - `node integration/check-shell-surfaces.mjs <本机原生CSS目录>`：背景透明、控件可读性及样式撤回。
