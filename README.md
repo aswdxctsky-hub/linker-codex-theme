@@ -2,7 +2,7 @@
 
 瓷白与冰蓝的科幻启动仪式，配合白龙娘问候、双语机械音声和贯穿对话窗口的透明背景。
 
-**Windows v0.5.1 已适配 `OpenAI.Codex 26.1103.3517.0`，支持签名更新包、首次遇到新版时的本机兼容验证，以及独立的启动等待窗口。** macOS 由 [macos-adaptation 分支](https://github.com/aswdxctsky-hub/linker-codex-theme/tree/macos-adaptation) 单独接续，本轮没有改动或验证 Mac 实现。
+**Windows v0.5.2 已适配 `OpenAI.Codex 26.1103.3517.0`，支持签名更新包、首次遇到新版时的本机兼容验证，以及独立的启动等待窗口。** macOS 由 [macos-adaptation 分支](https://github.com/aswdxctsky-hub/linker-codex-theme/tree/macos-adaptation) 单独接续，本轮没有改动或验证 Mac 实现。
 
 ## 当前效果
 

@@ -8,7 +8,7 @@ import {verifyVersion,prepareMedia,activate,digest} from './release-store.mjs';
 
 const source=dirname(fileURLToPath(import.meta.url)),args=process.argv.slice(2),value=flag=>args.includes(flag)?args[args.indexOf(flag)+1]:null;
 const test=args.includes('--test-install'),root=resolve(value('--root')||join(process.env.LOCALAPPDATA,'Linker','CodexTheme'));
-const bundle=resolve(value('--bundle')||join(source,'dist','0.5.1'));
+const bundle=resolve(value('--bundle')||join(source,'dist','0.5.2'));
 const publicKey=await readFile(join(source,'release-public.pem'),'utf8'),release=await verifyVersion(join(bundle,'runtime'),publicKey);
 let backup=null;
 try{

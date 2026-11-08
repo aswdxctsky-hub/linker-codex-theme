@@ -1,6 +1,6 @@
 # Windows 接入说明
 
-v0.5.1 对应本轮验证的官方 Store 包 `OpenAI.Codex 26.1103.3517.0`。原有视觉、双语开场与角色动画保持一致。应用包、登录资料和聊天数据库不由安装器改写。
+v0.5.2 对应本轮验证的官方 Store 包 `OpenAI.Codex 26.1103.3517.0`。原有视觉、双语开场与角色动画保持一致。应用包、登录资料和聊天数据库不由安装器改写。
 
 ## 安装
 
@@ -52,7 +52,7 @@ node bootstrap.mjs --restore
 ```powershell
 python integration/build.py
 & integration/build-progress.ps1
-node integration/build-release.mjs 0.5.1
+node integration/build-release.mjs 0.5.2
 ```
 
 发布构建需要维护者本机签名密钥，保存在 `%LOCALAPPDATA%\Linker\ReleaseSigning`，不进入仓库或发行资产。已有公钥不匹配时构建停止；普通安装只需公钥。发布后的版本号及其签名内容不可复用或改写。
@@ -61,11 +61,14 @@ node integration/build-release.mjs 0.5.1
 
 ## 验证脚本
 
+- `node integration/test-intro-reload.mjs`：真实页面重载后的进度、语音、视频续播，以及结束、跳过、恢复后重载。`--english` 验证英文，`--rapid` 增加连续重载；`--baseline` 仅用于对照仍保留在本机的 v0.5.1。
+- `node integration/test-media-delivery.mjs`：旧文档的素材失败回调不会终止新文档开场。
+
 - `node integration/test-release-store.mjs`：签名、分阶段安装、下载中断、文件篡改、素材复用及结构变化拒绝。
 - `node integration/test-bootstrap.mjs`：启用中断回退、损坏版本回退、重复启动锁。
 - `node integration/test-launcher.mjs`：真实独立资料窗口中的首次兼容验证、缓存启动、语言保留与恢复持久化。
 - `node integration/test-cancel-probe.mjs`：取消本机验证后，仅结束自己的测试进程，不保存通过记录。
-- `node integration/test-online-update.mjs`：从 GitHub 真实下载、验签、启用并启动；加 `--background` 验证后台下载和下次冷启动启用。需要已发布 v0.5.1 与维护者本机的 0.4.99 测试包，不发布测试版本。
+- `node integration/test-online-update.mjs`：从 GitHub 真实下载、验签、启用并启动；加 `--background` 验证后台下载和下次冷启动启用。需要已发布 v0.5.2 与维护者本机的 0.4.99 测试包，不发布测试版本。
 - `node integration/test-startup.mjs`：Windows 零匹配、单进程、多进程解析。
 - `node integration/verify-version.mjs <官方可执行文件> <标签>`：完整开场、重播、跳过及恢复；标签含 `english` 时验证英文。
 - `node integration/check-shell-surfaces.mjs <本机原生CSS目录>`：背景透明、控件可读性及样式撤回。

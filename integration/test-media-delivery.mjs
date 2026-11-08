@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {setTimeout as delay} from 'node:timers/promises';
+import {mountTheme} from './media-delivery.mjs';
+const context=vm.createContext({window:{}});let rejectOld;
+const runtime='(function(payload){window.__linkerThemeV4={status:()=>({installed:true,mountId:payload.mountId}),loadMedia:()=>true,failMedia:()=>window.failures++};return window.__linkerThemeV4.status();})';
+context.window.failures=0;
+const client={async evaluate(_session,expression){if(expression.includes('loadMedia(')&&expression.includes('old-mount'))return new Promise((_,reject)=>{rejectOld=reject;});return vm.runInContext(expression,context);}};
+const media={images:{background:'b',logo:'l',portrait:'p',video:'zh',videoEn:'en'},voices:{zh_access:'a',en_access:'b'}};
+const old=await mountTheme(client,'same-session',runtime,media,{mountId:'old-mount',config:{language:'en'}});
+const current=await mountTheme(client,'same-session',runtime,media,{mountId:'new-mount',config:{language:'en'}});await current.delivery;
+rejectOld(Error('Execution context was destroyed'));await assert.rejects(()=>old.delivery);await delay(0);
+assert.equal(context.window.__linkerThemeV4.status().mountId,'new-mount');assert.equal(context.window.failures,0);
+console.log(JSON.stringify({passed:true,obsoleteMediaFailureCannotStopNewIntro:true}));

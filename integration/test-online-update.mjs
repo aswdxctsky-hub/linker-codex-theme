@@ -1,4 +1,4 @@
-// Requires a published win-v0.5.1 release and a local signed 0.4.99 fixture bundle.
+// Requires a published win-v0.5.2 release and a local signed 0.4.99 fixture bundle.
 import assert from 'node:assert/strict';
 import {mkdir,writeFile,readFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
@@ -22,17 +22,17 @@ try{
   const baseline=JSON.parse((await run(process.execPath,[...args,'--update-only'],{windowsHide:true,timeout:120000})).stdout);assert.equal(baseline.version,'0.4.99');
   await writeFile(join(profile,'config.json'),JSON.stringify({enabled:true,language:'en',sound:false,autoUpdate:true}));
   start();result.previousMounted=await waitFor(s=>s.mounted===true);assert.equal(result.previousMounted.themeRelease,'0.4.99');
-  await waitFor(async()=> (await readJson(join(profile,'pending.json'),null))?.version==='0.5.1');
-  assert.notEqual((await readJson(join(profile,'current.json'),{})).version,'0.5.1');result.stagedWithoutInterruptingSession=true;
-  await stop();start();result.mounted=await waitFor(s=>s.mounted===true&&s.themeRelease==='0.5.1');
+  await waitFor(async()=> (await readJson(join(profile,'pending.json'),null))?.version==='0.5.2');
+  assert.notEqual((await readJson(join(profile,'current.json'),{})).version,'0.5.2');result.stagedWithoutInterruptingSession=true;
+  await stop();start();result.mounted=await waitFor(s=>s.mounted===true&&s.themeRelease==='0.5.2');
  }else{
   result.update=JSON.parse((await run(process.execPath,[...args,'--update-only'],{windowsHide:true,timeout:120000})).stdout);
-  assert.equal(result.update.version,'0.5.1');assert.equal(result.update.compatibilityCached,false);
+  assert.equal(result.update.version,'0.5.2');assert.equal(result.update.compatibilityCached,false);
  }
- const pointer=await readJson(join(profile,'current.json'),null);assert.deepEqual(pointer,{version:'0.5.1',previous:'0.4.99'});
- const key=await readFile(join(install,'release-public.pem'),'utf8');await verifyVersion(join(profile,'versions','0.5.1'),key);
+ const pointer=await readJson(join(profile,'current.json'),null);assert.deepEqual(pointer,{version:'0.5.2',previous:'0.4.99'});
+ const key=await readFile(join(install,'release-public.pem'),'utf8');await verifyVersion(join(profile,'versions','0.5.2'),key);
  result.pointer=pointer;result.downloadedSignatureVerified=true;
- if(!child){start();result.mounted=await waitFor(s=>s.mounted===true);}assert.equal(result.mounted.themeRelease,'0.5.1');
+ if(!child){start();result.mounted=await waitFor(s=>s.mounted===true);}assert.equal(result.mounted.themeRelease,'0.5.2');
  await run(process.execPath,[...args,'--restore'],{windowsHide:true});await waitFor(s=>s.mounted===false&&s.themeEnabled===false);
  result.restored=true;result.passed=true;
 }catch(error){result.error=error.stack;process.exitCode=1;}

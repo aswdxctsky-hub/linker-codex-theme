@@ -6,7 +6,7 @@
 
 用户希望日常尽量沿用原有应用图标，不新增桌面入口。Windows 已通过替换任务栏固定项实现；**Mac 的 Dock 与应用启动不能照搬这个办法，需实机确认**。不要未经检查便改官方 `.app`、签名、Dock 数据或登录项，也不要宣称 Dock 同图标或更新兼容已实现。
 
-Windows 主线现为 v0.5.1；Mac 在 `macos-adaptation` 分支独立接续。本轮没有在 Windows 上编写或验证 Mac 启动器，也没有改动该分支；不要将本交接文档视为 Mac 已完成适配的证据。
+Windows 主线现为 v0.5.2；Mac 在 `macos-adaptation` 分支独立接续。本轮没有在 Windows 上编写或验证 Mac 启动器，也没有改动该分支；不要将本交接文档视为 Mac 已完成适配的证据。
 
 ## 从哪里开始
 
@@ -26,6 +26,8 @@ Windows 主线现为 v0.5.1；Mac 在 `macos-adaptation` 分支独立接续。�
 - 不要为 Mac 接入重新设计已确认的流程、替换素材或增加模拟聊天页面。
 
 ## Windows 接入事实
+
+Windows v0.5.2 修复文档重载导致开场提前结束的问题：`launcher.mjs` 保存播放进度，`intro-guard.mjs` 在新文档预先遮挡主内容，`media-delivery.mjs` 用挂载标识隔离旧回调。复用运行时的 Mac 接入也应覆盖播放中重载测试，不能以首次挂载成功当作播放完成。此项尚未在 Mac 实测。
 
 2026-11-08 主线增加 `26.1103.3517.0` 实机适配、签名主题包更新、本机兼容验证及 WPF 等待窗口，详见 [UPDATES.md](UPDATES.md)。`launcher.mjs` 现导出 `startSession`，稳定入口为 `bootstrap.mjs`。Mac 可参考更新状态机，但不能直接运行 Windows 包检测、WPF 窗口或测试清理逻辑。Windows 发行标签为 `win-v<version>`，Mac 应独立命名与验证，避免两端互取更新。
 
