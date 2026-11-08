@@ -10,7 +10,7 @@ import {latestRelease,installRuntime,prepareMedia,verifyVersion,activate,compare
 import {cachedCompatibility,ensureCompatible} from './auto-compatibility.mjs';
 
 const run=promisify(execFile);
-export async function runManager({installRoot,stateRoot,testRoot,current,publicKey,started,args}){
+export async function runManager({installRoot,stateRoot,testRoot,current,publicKey,started,args,entryRelease=null,onSessionReady=()=>{}}){
  const configPath=join(stateRoot,'config.json'),statePath=join(stateRoot,'state.json');
  const config={enabled:true,language:'zh',sound:true,autoUpdate:true,...await readJson(configPath,{})};
  if(config.autoCompatibility===false)config.autoUpdate=false;
@@ -44,11 +44,11 @@ export async function runManager({installRoot,stateRoot,testRoot,current,publicK
  ui.events.on('failure',error=>log('waiting-window-error',error.message));
  const lookup=!diagnostic&&config.enabled!==false&&config.autoUpdate!==false?latestRelease(publicKey,{signal:abort.signal}).catch(async error=>{if(!abort.signal.aborted)await log('update-unavailable',error.message);return null;}):Promise.resolve(null);
  try{
-  const context=await windowsContext(null);pkg=context.package;await log('launch-request',diagnostic?'diagnose':testRoot?'isolated-test':'launch');
+  const context=await windowsContext(null);pkg=context.package;await log('launch-context',JSON.stringify({bootStartedAt:context.bootStartedAt,appVersion:pkg.version,entryRelease,existingAppPids:context.main.map(p=>p.pid)}));await log('launch-request',diagnostic?'diagnose':testRoot?'isolated-test':'launch');
   if(originalChosen)return;
   if(abort.signal.aborted){await original('user-request');return;}
   const cached=await cachedCompatibility(stateRoot,pkg,current);
-  if(diagnostic){console.log(JSON.stringify({packageVersion:pkg.version,themeRelease:current.manifest.version,signedFilesVerified:true,localCompatibility:!!cached,autoUpdate:config.autoUpdate!==false,discoveryMs:Math.round(performance.now()-started)}));return;}
+  if(diagnostic){console.log(JSON.stringify({packageVersion:pkg.version,themeRelease:current.manifest.version,entryRelease,signedFilesVerified:true,localCompatibility:!!cached,autoUpdate:config.autoUpdate!==false,discoveryMs:Math.round(performance.now()-started)}));return;}
   if(config.enabled===false){await original('disabled');return;}
   if(!testRoot&&context.main.length&&!updateOnly){await original('already-running');return;}
   const failed=await readJson(join(stateRoot,'update-state.json'),{});let selected=current;
@@ -86,6 +86,7 @@ export async function runManager({installRoot,stateRoot,testRoot,current,publicK
   ui.update({title:'正在连接',english:'Connecting',detail:'载入启动界面',progress:null});
   const session=await import(pathToFileURL(join(selected.directory,'launcher.mjs')));sessionStarted=true;
   await session.startSession({installRoot,stateRoot,testRoot,release:selected,mediaPath:media.path,pkg,config,ui,signal:abort.signal,started,onReady:async timings=>{
+   onSessionReady();
    await atomicJson(join(stateRoot,'boot-status.json'),{version:selected.manifest.version,pid:process.pid,ready:true});await log('startup-timings',JSON.stringify(timings));
    // A known working startup never waits on the network. Later releases are staged for the next launch.
    if(selected.manifest.version===current.manifest.version&&!updateOnly)void (async()=>{

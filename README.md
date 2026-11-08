@@ -2,7 +2,7 @@
 
 瓷白与冰蓝的科幻启动仪式，配合白龙娘问候、双语机械音声和贯穿对话窗口的透明背景。
 
-**Windows v0.5.2 已适配 `OpenAI.Codex 26.1103.3517.0`，支持签名更新包、首次遇到新版时的本机兼容验证，以及独立的启动等待窗口。** macOS 由 [macos-adaptation 分支](https://github.com/aswdxctsky-hub/linker-codex-theme/tree/macos-adaptation) 单独接续，本轮没有改动或验证 Mac 实现。
+**Windows v0.6.0 已适配 `OpenAI.Codex 26.1103.4239.0`，支持签名更新包、首次遇到新版时的本机兼容验证，以及独立的启动等待窗口。** macOS 由 [macos-adaptation 分支](https://github.com/aswdxctsky-hub/linker-codex-theme/tree/macos-adaptation) 单独接续，本轮没有改动或验证 Mac 实现。
 
 ## 当前效果
 
@@ -41,7 +41,8 @@ python3 -m http.server 8767 --bind 127.0.0.1 --directory concept-v4
 | --- | --- |
 | `concept-v4/app.js`、`assets/`、`audio/` | 已确认的流程、图像、视频与双语音声 |
 | `integration/runtime.template.js`、`shell-surfaces.css` | 原生应用内的开场、背景与恢复控制 |
-| `integration/bootstrap.mjs` | 稳定入口、签名验证、版本选择与中断回退 |
+| `integration/bootstrap.mjs` | 固定信任加载器：验签与版本分发 |
+| `integration/boot-entry.mjs`、`instance-lock.mjs` | 随签名包更新的启动逻辑、系统单实例控制与中断恢复 |
 | `integration/manager.mjs`、`release-store.mjs` | 更新下载、版本目录与启用流程 |
 | `integration/auto-compatibility.mjs`、`shell-contract.json` | 应用结构检查、独立挂载与撤回测试 |
 | `integration/ProgressWindow.cs` | 独立于 Codex 的等待与下载进度窗口 |

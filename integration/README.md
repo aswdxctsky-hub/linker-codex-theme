@@ -1,6 +1,6 @@
 # Windows 接入说明
 
-v0.5.2 对应本轮验证的官方 Store 包 `OpenAI.Codex 26.1103.3517.0`。原有视觉、双语开场与角色动画保持一致。应用包、登录资料和聊天数据库不由安装器改写。
+v0.6.0 对应本轮验证的官方 Store 包 `OpenAI.Codex 26.1103.4239.0`。原有视觉、双语开场与角色动画保持一致。应用包、登录资料和聊天数据库不由安装器改写。
 
 ## 安装
 
@@ -20,6 +20,8 @@ $release = node integration/fetch-release.mjs | ConvertFrom-Json
 官方图标提取到本地固定路径，已有受管理的任务栏项仅刷新图标位置与应用标识，避免 Store 清理旧版本目录后失去图标；修改前保存该固定项的副本。
 
 应用已经运行时，点击入口会聚焦现有窗口；完整退出应用后，下一次从任务栏打开才播放新开场。安装本身不关闭当前应用。
+
+从 v0.5.x 升级到 v0.6.0，需要先更新此仓库并执行上面的安装命令一次，以迁移旧的固定入口。仅由旧运行时下载主题包不能修复旧入口在读取包之前就退出的问题。迁移后，单实例控制、异常恢复等启动逻辑包含在签名发行包中，之后随自动更新启用。固定文件只保留验签与分发职责；公钥轮换或信任协议变更仍需显式安装。
 
 ## 日常启动
 
@@ -45,19 +47,19 @@ node bootstrap.mjs --update-only --force-probe
 node bootstrap.mjs --restore
 ```
 
-`--diagnose` 只报告实际包版本、主题签名和本机兼容缓存；`--update-only` 获取更新并验证，不启动正式账户窗口；`--force-probe` 强制重新验证。测试窗口使用独立资料目录。详见 [更新实现](../docs/UPDATES.md)。
+`--diagnose` 报告实际包版本、主题版本、启动逻辑版本、签名和本机兼容缓存；`--update-only` 获取更新并验证，不启动正式账户窗口；`--force-probe` 强制重新验证。已有主题启动器运行时，`--update-only` 返回 deferred，不与正在启动的实例竞争。`bootstrap.log` 记录单实例取得、重复激活、回退和入口异常；`launcher.log` 记录开机时间、官方版本及挂载结果。测试窗口使用独立资料目录。详见 [更新实现](../docs/UPDATES.md)。
 
 ## 开发与发布
 
 ```powershell
 python integration/build.py
 & integration/build-progress.ps1
-node integration/build-release.mjs 0.5.2
+node integration/build-release.mjs 0.6.0
 ```
 
 发布构建需要维护者本机签名密钥，保存在 `%LOCALAPPDATA%\Linker\ReleaseSigning`，不进入仓库或发行资产。已有公钥不匹配时构建停止；普通安装只需公钥。发布后的版本号及其签名内容不可复用或改写。
 
-把 `integration/dist/<version>/` 中的压缩运行时、压缩素材和 `linker-windows-release.json` 上传到 `win-v<version>` 的 GitHub Release。只有正式 Windows 标签参与自动更新；Mac 标签与预发布不参与。升级稳定入口协议或轮换公钥需单独安装，运行时更新不能替换信任根。
+把 `integration/dist/<version>/` 中的压缩运行时、压缩素材和 `linker-windows-release.json` 上传到 `win-v<version>` 的 GitHub Release。只有正式 Windows 标签参与自动更新；Mac 标签与预发布不参与。升级稳定入口协议或轮换公钥需单独安装，固定信任加载器和公钥不通过运行时更新替换；`boot-entry.mjs` 和 `instance-lock.mjs` 是可更新的签名启动逻辑。签名救援副本 `bootstrap-core/` 让旧运行时回退时仍使用新的单实例机制。
 
 ## 验证脚本
 
@@ -65,10 +67,11 @@ node integration/build-release.mjs 0.5.2
 - `node integration/test-media-delivery.mjs`：旧文档的素材失败回调不会终止新文档开场。
 
 - `node integration/test-release-store.mjs`：签名、分阶段安装、下载中断、文件篡改、素材复用及结构变化拒绝。
-- `node integration/test-bootstrap.mjs`：启用中断回退、损坏版本回退、重复启动锁。
+- `node integration/test-bootstrap.mjs`：Windows 实际命名管道互斥、八次并发启动、强制结束、活进程号复用、跨重启残留状态、签名启动逻辑更新与篡改回退。
+- `node integration/test-cold-start.mjs`：官方应用独立资料的真实启动，进程树强制结束后重复恢复、重复点击与完整撤回。上述测试不等同于重启整台电脑。
 - `node integration/test-launcher.mjs`：真实独立资料窗口中的首次兼容验证、缓存启动、语言保留与恢复持久化。
 - `node integration/test-cancel-probe.mjs`：取消本机验证后，仅结束自己的测试进程，不保存通过记录。
-- `node integration/test-online-update.mjs`：从 GitHub 真实下载、验签、启用并启动；加 `--background` 验证后台下载和下次冷启动启用。需要已发布 v0.5.2 与维护者本机的 0.4.99 测试包，不发布测试版本。
+- `node integration/test-online-update.mjs`：从 GitHub 真实下载、验签、启用并启动；加 `--background` 验证后台下载和下次冷启动启用。需要已发布 v0.6.0 与维护者本机的 0.4.99 测试包，不发布测试版本。
 - `node integration/test-startup.mjs`：Windows 零匹配、单进程、多进程解析。
 - `node integration/verify-version.mjs <官方可执行文件> <标签>`：完整开场、重播、跳过及恢复；标签含 `english` 时验证英文。
 - `node integration/check-shell-surfaces.mjs <本机原生CSS目录>`：背景透明、控件可读性及样式撤回。

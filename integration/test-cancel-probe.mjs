@@ -6,7 +6,7 @@ import {verifyVersion} from './release-store.mjs';
 import {windowsContext} from './windows-context.mjs';
 import {readJson} from './compatibility.mjs';
 const root=resolve('integration/verification','cancel-probe-'+Date.now());await mkdir(root,{recursive:true});
-const key=await readFile('integration/release-public.pem','utf8'),release=await verifyVersion(resolve('integration/dist/0.5.2/runtime'),key),pkg=(await windowsContext()).package;
+const key=await readFile('integration/release-public.pem','utf8'),release=await verifyVersion(resolve('integration/dist/0.6.0/runtime'),key),pkg=(await windowsContext()).package;
 const abort=new AbortController();let pid;
 const ui={update(value){if(value.probePid){pid=value.probePid;queueMicrotask(()=>abort.abort(Error('Test original selection')));}}};
 await assert.rejects(()=>ensureCompatible({root,pkg,release,mediaPath:resolve('integration/bundle/media.json'),ui,signal:abort.signal,force:true}));
