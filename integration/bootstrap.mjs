@@ -20,6 +20,11 @@ try{
   current=await verifyVersion(await versionDirectory(pointer.previous),publicKey);verificationRollback=true;
   await log('release-verification-fallback',error.message);
  }
+ const rescue=await verifyVersion(join(installRoot,'bootstrap-core'),publicKey).catch(()=>null);
+ // A rollback may recover visuals, but must never revive the unpackaged launcher.
+ if(rescue?.manifest.files['PackageHost.exe']&&!current.manifest.files['PackageHost.exe']){
+  await log('legacy-runtime-rejected',current.manifest.version);current=rescue;verificationRollback=false;
+ }
  let entry=current.manifest.files['boot-entry.mjs']?current:await verifyVersion(join(installRoot,'bootstrap-core'),publicKey);
  let module;
  try{module=await import(pathToFileURL(join(entry.directory,'boot-entry.mjs')));if(typeof module.runBoot!=='function')throw Error('Missing startup entry');}

@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {checkCapabilities} from './shell-capabilities.mjs';
+import {checkContract} from './auto-compatibility.mjs';
+import {classifyUpdaterLog} from './updater-health.mjs';
+const old='[data-app-shell-frame] [data-app-shell-main-surface] [data-slate-sidebar-content] [data-composer-surface-variant] .WorkspaceContent-oldHash{background:white}';
+const future=old.replaceAll('oldHash','futureHash').replace('background:white','background:var(--future)').replace('data-slate-sidebar-content','data-sidebar-navigation-root');
+const contract={schema:2,capabilities:['frame','main','sidebar','composer']};
+for(const css of [old,future])assert.equal(checkContract({capabilities:checkCapabilities(css)},contract),true);
+assert.throws(()=>checkCapabilities(future.replace('data-app-shell-main-surface','removed-main-role')),/Unsupported shell capabilities/);
+assert.equal(classifyUpdaterLog('[sparkle] Updater unavailable after init. reason="missing packaged Windows update configuration"'),'unavailable');
+assert.equal(classifyUpdaterLog('[windows-offers] Windows update eligibility canSilentlyDownload=true hasUpdate=true source=store'),'ready');
+assert.equal(classifyUpdaterLog('[sparkle] in_app_updates_policy_timeout policy=pending'),'pending');
+console.log(JSON.stringify({passed:true,generatedClassChangesAccepted:true,ordinaryCssChangesAccepted:true,missingSemanticRoleRejected:true,updaterFailureDetected:true}));

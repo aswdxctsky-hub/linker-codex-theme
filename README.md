@@ -2,7 +2,7 @@
 
 瓷白与冰蓝的科幻启动仪式，配合白龙娘问候、双语机械音声和贯穿对话窗口的透明背景。
 
-**Windows v0.6.0 已适配 `OpenAI.Codex 26.1103.4239.0`，支持签名更新包、首次遇到新版时的本机兼容验证，以及独立的启动等待窗口。** macOS 由 [macos-adaptation 分支](https://github.com/aswdxctsky-hub/linker-codex-theme/tree/macos-adaptation) 单独接续，本轮没有改动或验证 Mac 实现。
+**Windows v0.7.0 保留官方程序包身份启动，恢复主题与原版两条分支的官方更新器，并改用语义能力检查适应常规应用更新。** 支持签名主题更新、独立等待窗口及首次遇到新版时的本机兼容验证。macOS 由 [macos-adaptation 分支](https://github.com/aswdxctsky-hub/linker-codex-theme/tree/macos-adaptation) 单独接续，本轮没有改动或验证 Mac 实现。
 
 ## 当前效果
 
@@ -18,7 +18,7 @@
 
 已有可用版本时直接启动，后台查询并下载新的签名主题包，下一次冷启动验证后启用。官方应用版本变化，或已有新主题包待启用时，独立等待窗口先完成必要的下载、校验与本机测试，再衔接开场。下载显示实际字节进度；检查和验证显示扫描线。
 
-未知 Codex 版本先比对主题依赖的界面规则，再在独立资料目录实际挂载、撤回，通过才缓存结果。布局变化或测试失败时进入原版，等待维护者发布适配。主题更新使用固定公钥验证签名，保留上一版用于回退。
+未知 Codex 版本先检查主区域、侧栏、输入区等语义能力，再在独立资料目录实际挂载、撤回，通过才缓存结果。生成类名或颜色变化不需要人工添加版本白名单；关键能力缺失或测试失败时通过 Windows 官方注册入口进入原版。主题更新使用固定公钥验证签名，保留上一版用于回退；v0.7.0 迁移后不会退回丢失包身份的旧启动代码。
 
 这些操作更新的是**主题程序**。Codex 本体继续由其官方安装渠道更新。详细流程、边界与测量见 [更新与启动速度](docs/UPDATES.md)。
 
@@ -47,6 +47,8 @@ python3 -m http.server 8767 --bind 127.0.0.1 --directory concept-v4
 | `integration/auto-compatibility.mjs`、`shell-contract.json` | 应用结构检查、独立挂载与撤回测试 |
 | `integration/ProgressWindow.cs` | 独立于 Codex 的等待与下载进度窗口 |
 | `integration/launcher.mjs`、`media-delivery.mjs` | 私有管道挂载、分批素材传输与配置保存 |
+| `integration/PackageHost.cs`、`packaged-client.mjs`、`package-launch.ps1` | 在官方包环境中启动应用、校验包身份、私有管道转接 |
+| `integration/updater-health.mjs` | 从当前进程的官方日志核对更新器初始化状态 |
 | `integration/fetch-release.mjs`、`install-release.mjs` | 获取签名发行版、备份安装 |
 | `docs/MAC_HANDOFF.md` | Mac 接续的设计、已知事实和验收边界 |
 

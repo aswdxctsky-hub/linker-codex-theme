@@ -8,7 +8,7 @@ import {verifyVersion,prepareMedia,activate,digest} from './release-store.mjs';
 
 const source=dirname(fileURLToPath(import.meta.url)),args=process.argv.slice(2),value=flag=>args.includes(flag)?args[args.indexOf(flag)+1]:null;
 const test=args.includes('--test-install'),root=resolve(value('--root')||join(process.env.LOCALAPPDATA,'Linker','CodexTheme'));
-const bundle=resolve(value('--bundle')||join(source,'dist','0.6.0'));
+const bundle=resolve(value('--bundle')||join(source,'dist','0.7.0'));
 const publicKey=await readFile(join(source,'release-public.pem'),'utf8'),release=await verifyVersion(join(bundle,'runtime'),publicKey);
 let backup=null;
 try{
@@ -23,7 +23,7 @@ await mkdir(root,{recursive:true});
 const versionDir=join(root,'versions',release.manifest.version);await mkdir(versionDir,{recursive:true});
 for(const name of [...Object.keys(release.manifest.files),'release.json'])await copyFile(join(bundle,'runtime',name),join(versionDir,name));
 await verifyVersion(versionDir,publicKey);
-const rescue=release.manifest.files['boot-entry.mjs']?release:await verifyVersion(join(source,'dist','0.6.0','runtime'),publicKey);
+const rescue=release.manifest.files['boot-entry.mjs']?release:await verifyVersion(join(source,'dist','0.7.0','runtime'),publicKey);
 await mkdir(join(root,'bootstrap-core'),{recursive:true});
 for(const name of [...Object.keys(rescue.manifest.files),'release.json'])await copyFile(join(rescue.directory,name),join(root,'bootstrap-core',name));
 await verifyVersion(join(root,'bootstrap-core'),publicKey);

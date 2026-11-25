@@ -20,9 +20,10 @@ export async function runManager({stateRoot,current,args,entryRelease,onSessionR
  if(!args.includes('--fixture-unready'))onSessionReady?.();
  if(args.includes('--fixture-hold'))await new Promise(()=>setInterval(()=>{},1000));
 }`;
-for(const version of ['0.6.0','0.6.1','0.6.2']){
+for(const version of ['0.6.0','0.6.1','0.6.2','0.7.0']){
  const dir=join(root,'versions',version);await mkdir(dir,{recursive:true});
  const contents={'manager.mjs':manager,'launcher.mjs':'fixture','runtime.js':'fixture','ProgressWindow.exe':'fixture','shell-contract.json':'{}'};
+ if(version==='0.7.0')for(const name of ['PackageHost.exe','packaged-client.mjs','package-launch.ps1','updater-health.mjs','shell-capabilities.mjs'])contents[name]='fixture';
  for(const name of ['boot-entry.mjs','instance-lock.mjs','compatibility.mjs','release-store.mjs'])contents[name]=await readFile('integration/'+name,'utf8');
  contents['boot-entry.mjs']=contents['boot-entry.mjs'].replace("await log('entry-selected',entryRelease);",`await log('entry-selected',entryRelease);await atomicJson(join(stateRoot,'entry-marker.json'),{codeVersion:'${version}'});`);
  if(version==='0.6.2')contents['boot-entry.mjs']='export invalid syntax;';
@@ -71,6 +72,9 @@ try{
  await activate(root,'0.6.1');await atomicJson(join(root,'boot-status.json'),{version:'0.6.1',ready:true});await appendFile(join(root,'versions','0.6.1','boot-entry.mjs'),'\n// tampered');await run();
  assert.equal((await readJson(join(root,'entry-marker.json'),{})).codeVersion,'0.6.0');result.tamperedEntryRejected=true;
  await activate(root,'0.6.2');await run();assert.equal((await readJson(join(root,'entry-marker.json'),{})).codeVersion,'0.6.0');assert.match(await readFile(join(root,'bootstrap.log'),'utf8'),/entry-import-fallback/);result.brokenSignedEntryUsesRescue=true;
+ await cp(join(root,'versions','0.7.0'),join(root,'bootstrap-core'),{recursive:true});
+ await activate(root,'0.6.0');await run();assert.equal((await readJson(join(root,'observed.json'),{})).version,'0.7.0');result.legacyUnpackagedRollbackRejected=true;
+ await activate(root,'0.7.0');await atomicJson(join(root,'boot-status.json'),{version:'0.7.0',ready:false});await run();assert.equal((await readJson(join(root,'observed.json'),{})).version,'0.7.0');result.interruptedMigrationKeepsPackagedLauncher=true;
  assert.equal(await readJson(join(root,'instance.json'),null),null);result.passed=true;
 }catch(error){result.error=error.stack;process.exitCode=1;}
 finally{

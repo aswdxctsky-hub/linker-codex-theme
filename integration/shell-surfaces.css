@@ -1,16 +1,25 @@
-/* Shell selectors checked in OpenAI.Codex 26.1029.7803.0 and 26.1029.9216.0. */
+/* Semantic shell roles survive ordinary generated-class and CSS rebuilds. */
+html[data-linker-pearl="v4"] {
+  --app-shell-page-window-fill: transparent !important;
+  --app-shell-sidebar-docked-background: rgba(247, 250, 253, .26) !important;
+}
+html[data-linker-pearl="v4"] #root [data-app-shell-frame],
+html[data-linker-pearl="v4"] #root [data-app-shell-page-surface],
+html[data-linker-pearl="v4"] #root [data-app-shell-active-page],
 html[data-linker-pearl="v4"] #root [data-app-shell-main-surface="default"],
-html[data-linker-pearl="v4"] #root .WorkspaceContent-dnr6uY,
-html[data-linker-pearl="v4"] #root .WorkspaceContent-dnr6uY::before,
-html[data-linker-pearl="v4"] #root .MainContentViewport-OinMfT {
+html[data-linker-pearl="v4"] #root :is([class^="WorkspaceContent-"], [class*=" WorkspaceContent-"]),
+html[data-linker-pearl="v4"] #root :is([class^="WorkspaceContent-"], [class*=" WorkspaceContent-"])::before,
+html[data-linker-pearl="v4"] #root :is([class^="MainContentViewport-"], [class*=" MainContentViewport-"]) {
   background-color: transparent !important;
 }
+html[data-linker-pearl="v4"] #root [data-app-shell-frame] { background-image: none !important; }
+html[data-linker-pearl="v4"] #root [data-linker-shell-backdrop] { background: transparent !important; }
 
-html[data-linker-pearl="v4"] #root .LeftPanel-e8ghK3:not([data-slate-sidebar-peeking="true"]) {
+html[data-linker-pearl="v4"] #root :is([data-app-shell-left-panel-appearance], [class^="LeftPanel-"], [class*=" LeftPanel-"]):not([data-slate-sidebar-peeking="true"]) {
   background-color: rgba(247, 250, 253, .26) !important;
 }
-html[data-linker-pearl="v4"] #root .LeftPanel-e8ghK3:not([data-slate-sidebar-peeking="true"]) .sidebar-navigation,
-html[data-linker-pearl="v4"] #root .LeftPanel-e8ghK3:not([data-slate-sidebar-peeking="true"]) [data-slate-sidebar-content] {
+html[data-linker-pearl="v4"] #root [data-sidebar-navigation-root],
+html[data-linker-pearl="v4"] #root [data-slate-sidebar-content] {
   background-color: transparent !important;
 }
 
@@ -24,7 +33,7 @@ html[data-linker-pearl="v4"] #root [data-app-shell-main-titlebar] {
 }
 
 /* Keep the input surface readable without covering the conversation around it. */
-html[data-linker-pearl="v4"] #root .ComposerLayoutRoot-XCKS7O:is([data-composer-surface-variant="default"], [data-composer-surface-variant="opaque"]) {
+html[data-linker-pearl="v4"] #root :is([data-composer-surface-variant="default"], [data-composer-surface-variant="opaque"]) {
   --composer-layout-surface-background: rgba(250, 252, 255, .84) !important;
   --composer-layout-surface-backdrop-filter: blur(16px) !important;
 }

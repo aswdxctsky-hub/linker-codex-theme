@@ -4,13 +4,14 @@ import {pathToFileURL} from 'node:url';
 import {execFile,spawn} from 'node:child_process';
 import {promisify} from 'node:util';
 import {readJson,atomicJson} from './compatibility.mjs';
+import {launchPackaged} from './packaged-client.mjs';
 import {windowsContext} from './windows-context.mjs';
 import {progressWindow} from './progress-window.mjs';
 import {latestRelease,installRuntime,prepareMedia,verifyVersion,activate,compareVersions,digest,safeVersion} from './release-store.mjs';
 import {cachedCompatibility,ensureCompatible} from './auto-compatibility.mjs';
 
 const run=promisify(execFile);
-export async function runManager({installRoot,stateRoot,testRoot,current,publicKey,started,args,entryRelease=null,onSessionReady=()=>{}}){
+export async function runManager({installRoot,stateRoot,testRoot,current,publicKey,started,args,entryRelease=null,onSessionReady=()=>{},packageRetry=0}){
  const configPath=join(stateRoot,'config.json'),statePath=join(stateRoot,'state.json');
  const config={enabled:true,language:'zh',sound:true,autoUpdate:true,...await readJson(configPath,{})};
  if(config.autoCompatibility===false)config.autoUpdate=false;
@@ -34,11 +35,17 @@ export async function runManager({installRoot,stateRoot,testRoot,current,publicK
  async function original(reason){
   if(originalChosen)return;originalChosen=true;ui.close();
   await log('original',reason);await atomicJson(statePath,{running:false,mounted:false,reason,packageVersion:pkg?.version||null,themeEnabled:config.enabled!==false});
+  if(updateOnly){process.exitCode=1;console.log(JSON.stringify({updated:false,version:current.manifest.version,app:pkg?.version||null,reason}));return;}
   if(!pkg){registeredOriginal();return;}
   const launchArgs=[],env={...process.env};
   if(testRoot){const browser=join(testRoot,'browser'),data=join(testRoot,'codex');await mkdir(browser,{recursive:true});await mkdir(data,{recursive:true});launchArgs.push('--user-data-dir='+browser,'--no-first-run');Object.assign(env,{CODEX_ELECTRON_USER_DATA_PATH:browser,CODEX_HOME:data,CODEX_SQLITE_HOME:join(data,'sqlite')});}
-  const child=spawn(join(pkg.path,'app','ChatGPT.exe'),launchArgs,{windowsHide:false,detached:true,stdio:'ignore',env});child.on('error',error=>{void log('original-error',error.message);registeredOriginal();});child.unref();
-  if(testRoot)await atomicJson(statePath,{running:true,mounted:false,pid:child.pid,reason,packageVersion:pkg.version,testProfile:true});
+  // Existing instances are activated through Windows; never start an unpackaged EXE.
+  if(reason==='already-running'&&!testRoot){registeredOriginal();return;}
+  try{
+   const client=await launchPackaged(pkg,launchArgs,testRoot?env:{},{debug:false});
+   await log('original-package-identity',client.identity);
+   await atomicJson(statePath,{running:true,mounted:false,pid:client.child.pid,packageIdentity:client.identity,reason,packageVersion:pkg.version,testProfile:!!testRoot});client.disconnect();
+  }catch(error){await log('original-error',error.message);if(testRoot)throw error;registeredOriginal();}
  }
  ui.events.on('original',()=>{abort.abort(Error('Original requested'));ui.close();if(pkg)original('user-request').catch(()=>{});});
  ui.events.on('failure',error=>log('waiting-window-error',error.message));
@@ -71,6 +78,7 @@ export async function runManager({installRoot,stateRoot,testRoot,current,publicK
    compatibility=await candidate.ensureCompatible({root:stateRoot,pkg,release:selected,mediaPath:media.path,ui,signal:abort.signal,force:args.includes('--force-probe')});
   }catch(error){
    await log('compatibility-failed',error.message);
+   if(/Official package changed during startup/.test(error.message))throw error;
    if(selected.manifest.version===current.manifest.version||abort.signal.aborted){await original(abort.signal.aborted?'user-request':'compatibility-failed');return;}
    await atomicJson(join(stateRoot,'update-state.json'),{rejectedVersion:selected.manifest.version,reason:error.message});await atomicJson(join(stateRoot,'pending.json'),null);selected=current;
    try{media=await mediaFor(current);compatibility=await ensureCompatible({root:stateRoot,pkg,release:current,mediaPath:media.path,ui,signal:abort.signal});}catch{await original('compatibility-failed');return;}
@@ -94,6 +102,6 @@ export async function runManager({installRoot,stateRoot,testRoot,current,publicK
     const next=await installRuntime(stateRoot,latest,publicKey,{signal:abort.signal});await mediaFor(next);await atomicJson(join(stateRoot,'pending.json'),{version:next.manifest.version});await log('update-staged',next.manifest.version);
    })().catch(error=>log('background-update-failed',error.message));
   }});
- }catch(error){await log('startup-failed',error.message);if(!sessionStarted||error.nativeAvailable===false)await original(abort.signal.aborted?'user-request':'startup-failed');}
+ }catch(error){await log('startup-failed',error.message);if(/Official package changed during startup/.test(error.message)&&packageRetry<1&&!abort.signal.aborted){ui.close();abort.abort();return await runManager({installRoot,stateRoot,testRoot,current,publicKey,started,args,entryRelease,onSessionReady,packageRetry:packageRetry+1});}if(!sessionStarted||error.nativeAvailable===false)await original(abort.signal.aborted?'user-request':'startup-failed');}
  finally{ui.close();abort.abort();}
 }

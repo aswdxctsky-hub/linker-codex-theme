@@ -20,6 +20,7 @@ export function decodeManifest(envelope,publicKey){
   if(!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(name)||name.endsWith('.')||/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)||name==='release.json'||!hex.test(file.sha256)||!Number.isSafeInteger(file.bytes)||file.bytes<1||file.bytes>4*1024*1024)throw Error('Invalid release file');
  }
  for(const required of ['manager.mjs','launcher.mjs','runtime.js','ProgressWindow.exe','shell-contract.json'])if(!value.files[required])throw Error('Release is incomplete');
+ if(compareVersions(value.version,'0.7.0')>=0)for(const required of ['PackageHost.exe','packaged-client.mjs','package-launch.ps1','updater-health.mjs','shell-capabilities.mjs'])if(!value.files[required])throw Error('Packaged launch capability missing: '+required);
  for(const asset of [value.package,value.media])if(!asset||!hex.test(asset.sha256)||!Number.isSafeInteger(asset.bytes)||asset.bytes<1||asset.bytes>64*1024*1024||typeof asset.url!=='string')throw Error('Invalid release asset');
  if(!hex.test(value.media.contentSha256)||!Number.isSafeInteger(value.media.contentBytes)||value.media.contentBytes<1||value.media.contentBytes>80*1024*1024)throw Error('Invalid media asset');
  return value;

@@ -25,6 +25,25 @@ html[data-linker-pearl="v4"] #root .bg-surface.h-full{background-color:transpare
 /*__SHELL_SURFACES__*/
 `;
 doc.head.append(theme);doc.documentElement.setAttribute('data-linker-pearl','v4');
+// Some releases paint a separate, noninteractive sheet behind the main surface.
+// Recognize its role and geometry rather than a generated class or sibling index.
+const backdrops=new Map();let backdropTimer;
+function syncBackdrops(){
+ if(disposed)return;
+ const main=doc.querySelector('[data-app-shell-main-surface="default"]'),frame=main?.closest('[data-app-shell-frame]');if(!frame)return;
+ const bounds=main.getBoundingClientRect();if(bounds.width<1||bounds.height<1)return;
+ for(let current=main;current&&current!==frame;current=current.parentElement){
+  for(const element of current.parentElement?.children||[]){
+   if(element===current||element.childElementCount||element.textContent.trim()||!['DIV','SECTION'].includes(element.tagName)||element.closest('[role="dialog"],[role="menu"]'))continue;
+   const style=getComputedStyle(element),r=element.getBoundingClientRect();
+   if(style.pointerEvents!=='none'||!['absolute','fixed'].includes(style.position)||r.width<bounds.width*.9||r.height<bounds.height*.9||r.left>bounds.left+2||r.top>bounds.top+2)continue;
+   if(!backdrops.has(element)){backdrops.set(element,element.getAttribute('data-linker-shell-backdrop'));element.setAttribute('data-linker-shell-backdrop','');}
+  }
+ }
+}
+const scheduleBackdrops=()=>{clearTimeout(backdropTimer);backdropTimer=setTimeout(syncBackdrops,100);};
+const backdropObserver=new MutationObserver(scheduleBackdrops);backdropObserver.observe(doc.getElementById('root'),{childList:true,subtree:true});window.addEventListener('resize',scheduleBackdrops);syncBackdrops();
+function restoreBackdrops(){clearTimeout(backdropTimer);backdropObserver.disconnect();window.removeEventListener('resize',scheduleBackdrops);for(const [element,value]of backdrops)if(value===null)element.removeAttribute('data-linker-shell-backdrop');else element.setAttribute('data-linker-shell-backdrop',value);backdrops.clear();}
 const host=doc.createElement('div');host.id='linker-pearl-v4-controls';host.style.cssText='position:fixed;right:14px;bottom:14px;z-index:2147483000;-webkit-app-region:no-drag;';
 const panel=host.attachShadow({mode:'closed'});
 panel.innerHTML=`<style>:host{font:12px "Segoe UI","Microsoft YaHei",sans-serif;color:#35505f}*{box-sizing:border-box}button{font:inherit;color:inherit;cursor:pointer;border:0;background:transparent}button:focus-visible{outline:2px solid #77aec1;outline-offset:3px}[hidden]{display:none!important}.toggle{padding:7px 12px;border:1px solid #b9cbd76b;border-radius:5px;background:#f7fbfdde;backdrop-filter:blur(12px)}small{font-size:9px;color:#7c929f;margin-left:6px}.menu{position:absolute;bottom:41px;right:0;width:182px;padding:8px;border:1px solid #c8d7e2;border-radius:7px;background:#f9fcff;box-shadow:0 10px 35px #243f5814}.menu button{display:block;width:100%;padding:10px;text-align:left;border-radius:3px}.menu button:hover{background:#e7f0f6}.lang{display:flex;justify-content:space-between;padding:6px 9px;align-items:center}.lang button{width:auto;padding:6px 9px}.lang button[aria-pressed=true]{background:#e0edf4}.rule{border-top:1px solid #dde7ed;margin:5px 0}</style><div class="menu" id="menu" hidden><div class="lang"><span>音声<small>Voice</small></span><button id="zh" aria-pressed="true">中</button><button id="en" aria-pressed="false">EN</button></div><button id="sound">声音：开<small>Sound on</small></button><button id="replay">重播开场<small>Replay</small></button><div class="rule"></div><button id="restore">恢复原界面<small>Restore</small></button></div><button class="toggle" id="toggle" aria-expanded="false">主题<small>Theme</small></button>`;
@@ -38,7 +57,7 @@ panel.getElementById('replay').onclick=()=>{panel.getElementById('menu').hidden=
 panel.getElementById('restore').onclick=()=>{send('enabled',false);controller.dispose();};
 const emergency=e=>{if(e.ctrlKey&&e.altKey&&e.shiftKey&&e.code==='KeyL'){e.preventDefault();send('enabled',false);controller.dispose();}};
 doc.addEventListener('keydown',emergency,true);
-const controller={loadMedia,failMedia,status:()=>({installed:!disposed,version:4,mountId:payload.mountId||null,intro:!!introCleanup,introStage:doc.getElementById('linker-pearl-v4-intro')?.dataset.stage||null,introProgress:introProgress?.()||null,lastIntroResult,language:config.language}),update(next){config={...config,...next};sync();},replay:()=>startIntro(),resumeIntro:()=>introResume?.()||false,skipIntro:()=>introCleanup?.('skipped'),dispose(){if(disposed)return;disposed=true;introCleanup?.();window.__linkerIntroGuard?.remove();failMedia();theme.remove();host.remove();doc.removeEventListener('keydown',emergency,true);if(oldAttribute===null)doc.documentElement.removeAttribute('data-linker-pearl');else doc.documentElement.setAttribute('data-linker-pearl',oldAttribute);delete window.__linkerThemeV4;}};
+const controller={loadMedia,failMedia,status:()=>({installed:!disposed,version:4,mountId:payload.mountId||null,intro:!!introCleanup,introStage:doc.getElementById('linker-pearl-v4-intro')?.dataset.stage||null,introProgress:introProgress?.()||null,lastIntroResult,language:config.language}),update(next){config={...config,...next};sync();},replay:()=>startIntro(),resumeIntro:()=>introResume?.()||false,skipIntro:()=>introCleanup?.('skipped'),dispose(){if(disposed)return;disposed=true;introCleanup?.();window.__linkerIntroGuard?.remove();failMedia();restoreBackdrops();theme.remove();host.remove();doc.removeEventListener('keydown',emergency,true);if(oldAttribute===null)doc.documentElement.removeAttribute('data-linker-pearl');else doc.documentElement.setAttribute('data-linker-pearl',oldAttribute);delete window.__linkerThemeV4;}};
 window.__linkerThemeV4=controller;sync();
 async function startIntro(savedState=null){
  if(disposed)return;introCleanup?.();panel.getElementById('menu').hidden=true;host.hidden=true;

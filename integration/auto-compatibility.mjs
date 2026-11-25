@@ -5,7 +5,9 @@ import {promisify} from 'node:util';
 import {setTimeout as delay} from 'node:timers/promises';
 import {readJson,atomicJson,sha256} from './compatibility.mjs';
 import {digest} from './release-store.mjs';
-import {launchPipe} from './pipe-client.mjs';
+import {launchPackaged} from './packaged-client.mjs';
+import {checkCapabilities} from './shell-capabilities.mjs';
+import {updaterHealth} from './updater-health.mjs';
 import {mountTheme} from './media-delivery.mjs';
 
 const run=promisify(execFile);
@@ -20,21 +22,23 @@ export async function shellFingerprint(path){
   const header=Buffer.alloc(jsonSize);await file.read(header,0,jsonSize,16);const tree=JSON.parse(header.toString()),base=8+headerSize;
   function* walk(node,prefix=''){for(const [name,value] of Object.entries(node.files||{})){const full=prefix+name;if(value.files)yield* walk(value,full+'/');else yield [full,value];}}
   const entries=[...walk(tree)];if(!entries.some(([name])=>name==='webview/index.html'))throw Error('Application entry changed');
-  const groups=Object.fromEntries(SHELL_SELECTORS.map(n=>[n,new Set()]));
+  const groups=Object.fromEntries(SHELL_SELECTORS.map(n=>[n,new Set()]));let semantic='';
   for(const [name,entry] of entries){
    if(!name.startsWith('webview/')||!name.endsWith('.css')||entry.unpacked)continue;
    if(entry.size>16*1024*1024)throw Error('Stylesheet exceeds contract limit');
    const buffer=Buffer.alloc(entry.size);await file.read(buffer,0,entry.size,base+Number(entry.offset));const css=buffer.toString();
+   semantic+=css;
    if(!SHELL_SELECTORS.some(n=>css.includes(n)))continue;
    for(const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
     if(!/background|--composer-layout-surface|display|position|isolation|clip-path|pointer-events/.test(match[2]))continue;
     for(const selector of SHELL_SELECTORS)if(match[1].includes(selector))groups[selector].add(match[0]);
    }
   }
-  return Object.fromEntries(Object.entries(groups).map(([name,rules])=>[name,{count:rules.size,sha256:digest(Buffer.from([...rules].sort().join('\n')))}]));
+  return {...Object.fromEntries(Object.entries(groups).map(([name,rules])=>[name,{count:rules.size,sha256:digest(Buffer.from([...rules].sort().join('\n')))}])),capabilities:checkCapabilities(semantic)};
  }finally{await file.close();}
 }
 export function checkContract(actual,contract){
+ if(contract?.schema===2){for(const capability of contract.capabilities)if(!actual.capabilities?.includes(capability))throw Error('Unsupported shell capability: '+capability);return true;}
  if(contract?.schema!==1||!contract.selectors)throw Error('Shell contract missing');
  for(const selector of SHELL_SELECTORS){const value=actual[selector];if(!value?.count||!contract.selectors[selector]?.includes(value.sha256))throw Error('Application layout changed: '+selector);}
  return true;
@@ -44,7 +48,7 @@ export async function cachedCompatibility(root,pkg,release){
  const identity=await archiveIdentity(join(pkg.path,'app','resources','app.asar'));
  const cache=await readJson(join(root,'local-compatibility.json'),{records:[]});
  const key=digest(Buffer.from(release.envelope.payload));
- const record=cache.records.find(r=>r.packageVersion===pkg.version&&r.release===key&&same(r.identity,identity));
+ const record=cache.records.find(r=>r.protocol===2&&r.packageVersion===pkg.version&&r.release===key&&same(r.identity,identity));
  return record||null;
 }
 export async function ensureCompatible({root,pkg,release,mediaPath,ui,signal,force=false}){
@@ -57,7 +61,7 @@ export async function ensureCompatible({root,pkg,release,mediaPath,ui,signal,for
  const testRoot=join(root,'probes',Date.now()+'-'+process.pid),profile=join(testRoot,'browser'),data=join(testRoot,'codex');
  await mkdir(profile,{recursive:true});await mkdir(data,{recursive:true});
  ui?.update({title:'正在验证',english:'Verifying',detail:'确认连接与界面恢复',progress:null});
- const client=launchPipe(join(pkg.path,'app','ChatGPT.exe'),['--user-data-dir='+profile,'--no-first-run'],{CODEX_ELECTRON_USER_DATA_PATH:profile,CODEX_HOME:data,CODEX_SQLITE_HOME:join(data,'sqlite')});
+ const client=await launchPackaged(pkg,['--user-data-dir='+profile,'--no-first-run'],{CODEX_ELECTRON_USER_DATA_PATH:profile,CODEX_HOME:data,CODEX_SQLITE_HOME:join(data,'sqlite')},{hostPath:join(release.directory,'PackageHost.exe')});
  ui?.update({probePid:client.child.pid});const result={passed:false,pid:client.child.pid};
  const cancel=()=>{if(!client.closed)void run('taskkill.exe',['/PID',String(client.child.pid),'/T','/F'],{windowsHide:true}).catch(()=>{});};signal?.addEventListener('abort',cancel,{once:true});
  const until=async(fn,message)=>{const end=Date.now()+30000;while(Date.now()<end){signal?.throwIfAborted();const value=await fn();if(value)return value;await delay(100);}throw Error(message);};
@@ -66,7 +70,8 @@ export async function ensureCompatible({root,pkg,release,mediaPath,ui,signal,for
   result.browser=await client.call('Browser.getVersion');
   const target=await until(async()=>(await client.call('Target.getTargets')).targetInfos.find(t=>t.type==='page'&&/^app:\/\/-\/index\.html(?:[?#]|$)/.test(t.url)),'Main page unavailable');
   const session=(await client.call('Target.attachToTarget',{targetId:target.targetId,flatten:true})).sessionId;
-  await until(()=>client.evaluate(session,"document.readyState==='complete'&&!!document.getElementById('root')&&Array.from(document.querySelectorAll('button')).some(b=>b.getBoundingClientRect().width>0)"),'Application did not become ready');
+  // Login availability depends on the network; local theme verification must not.
+  await until(()=>client.evaluate(session,"document.readyState==='complete'&&document.getElementById('root')?.childElementCount>0"),'Application renderer did not become ready');
   const before=await client.evaluate(session,measure),runtime=await readFile(join(release.directory,'runtime.js'),'utf8'),media=JSON.parse(await readFile(mediaPath,'utf8'));
   const {mounted,delivery}=await mountTheme(client,session,runtime,media,{binding:'__linker_compatibility_probe',config:{language:'zh',sound:false},playIntro:true});
   if(!mounted?.installed)throw Error('Theme mount failed');
@@ -75,6 +80,8 @@ export async function ensureCompatible({root,pkg,release,mediaPath,ui,signal,for
   await client.evaluate(session,'window.__linkerThemeV4.dispose();true');
   const restored=await client.evaluate(session,measure);
   if(JSON.stringify(restored)!==JSON.stringify(before))throw Error('Theme did not restore the native page');
+  result.packageIdentity=client.identity;result.updater=await updaterHealth(client.child.pid,{since:client.startedAt});
+  if(result.updater.status==='unavailable')throw Error('Official updater unavailable in packaged probe');
   result.passed=true;
  }catch(error){result.error=error.message;throw error;}
  finally{
@@ -84,7 +91,7 @@ export async function ensureCompatible({root,pkg,release,mediaPath,ui,signal,for
   for(const generated of [profile,data]){const target=resolve(generated);if(!target.startsWith(resolve(root,'probes')+sep)||!target.startsWith(resolve(testRoot)+sep))throw Error('Unexpected probe cleanup path');await rm(target,{recursive:true,force:true,maxRetries:3,retryDelay:100}).catch(()=>{});}
  }
  if(!same(identity,await archiveIdentity(archive)))throw Error('Application changed during verification');
- const record={packageVersion:pkg.version,release:digest(Buffer.from(release.envelope.payload)),identity,appAsarSha256:appHash,verifiedAt:new Date().toISOString(),method:'shell-contract-and-isolated-runtime'};
+ const record={protocol:2,packageVersion:pkg.version,release:digest(Buffer.from(release.envelope.payload)),identity,appAsarSha256:appHash,packageIdentity:result.packageIdentity,updater:result.updater.status,verifiedAt:new Date().toISOString(),method:'semantic-capabilities-packaged-runtime-and-restore'};
  const path=join(root,'local-compatibility.json'),cache=await readJson(path,{records:[]});
  await atomicJson(path,{records:[record,...cache.records.filter(r=>!(r.packageVersion===record.packageVersion&&r.release===record.release))].slice(0,12)});
  return {...record,cached:false};

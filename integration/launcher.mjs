@@ -1,4 +1,5 @@
-import {launchPipe} from './pipe-client.mjs';
+import {launchPackaged} from './packaged-client.mjs';
+import {updaterHealth} from './updater-health.mjs';
 import {mountTheme} from './media-delivery.mjs';
 import {INTRO_GUARD_SOURCE} from './intro-guard.mjs';
 import {readJson,atomicJson} from './compatibility.mjs';
@@ -20,7 +21,8 @@ export async function startSession({installRoot,stateRoot,testRoot,release,media
  const save=change=>settingsQueue=settingsQueue.catch(()=>{}).then(async()=>{config={...config,...await readJson(configPath,{}),...change};await atomicJson(configPath,config);});
  const content=Promise.all([readFile(join(release.directory,'runtime.js'),'utf8'),readFile(mediaPath,'utf8')]);content.catch(()=>{});
  const args=[],env={};if(testRoot){const profile=join(testRoot,'browser'),data=join(testRoot,'codex');await mkdir(profile,{recursive:true});await mkdir(data,{recursive:true});args.push('--user-data-dir='+profile,'--no-first-run');Object.assign(env,{CODEX_ELECTRON_USER_DATA_PATH:profile,CODEX_HOME:data,CODEX_SQLITE_HOME:join(data,'sqlite')});}
- const client=launchPipe(join(pkg.path,'app','ChatGPT.exe'),args,env);timings.nativeStartedMs=Math.round(performance.now()-started);
+ let client;try{client=await launchPackaged(pkg,args,env);}catch(error){error.nativeAvailable=false;throw error;}timings.nativeStartedMs=Math.round(performance.now()-started);
+ await log('package-identity',client.identity);
  let resolveClosed,rejectClosed;const closed=new Promise((a,b)=>{resolveClosed=a;rejectClosed=b;});closed.catch(()=>{});
  client.events.on('closed',resolveClosed);client.events.on('launchError',rejectClosed);
  const abortSession=()=>{config.enabled=false;rejectClosed(Error('Original requested'));};signal?.addEventListener('abort',abortSession,{once:true});
@@ -90,9 +92,10 @@ export async function startSession({installRoot,stateRoot,testRoot,release,media
   catch(error){await log('attach-error',error.message);}finally{pending.delete(target.targetId);}
  }
  async function settingsChanged(){config={...config,...await readJson(configPath,{})};await state({themeEnabled:config.enabled!==false,language:config.language});for(const entry of sessions.values())await apply(entry);}
- let watchdog;
+ let watchdog,healthTimer,healthBusy=false;
  try{
-  await state({running:true,mounted:false,pid:client.child.pid,launcherPid:process.pid,reason:null,error:null,packageVersion:pkg.version,testProfile:!!testRoot});
+  await state({running:true,mounted:false,pid:client.child.pid,launcherPid:process.pid,packageIdentity:client.identity,officialUpdater:'pending',reason:null,error:null,packageVersion:pkg.version,testProfile:!!testRoot});
+  healthTimer=setInterval(async()=>{if(healthBusy||ended)return;healthBusy=true;try{const health=await updaterHealth(client.child.pid,{since:client.startedAt});await state({officialUpdater:health.status});if(health.status!=='pending'){await log('official-updater',health.status);clearInterval(healthTimer);}}catch(error){await log('updater-health-error',error.message);}finally{healthBusy=false;}},15000);healthTimer.unref();
   [runtime,media]=await content;media=JSON.parse(media);
   client.events.on('Target.targetCreated',p=>attach(p.targetInfo));client.events.on('Target.targetInfoChanged',p=>attach(p.targetInfo));
   client.events.on('Target.detachedFromTarget',p=>{for(const [id,entry] of sessions)if(entry.sessionId===p.sessionId)sessions.delete(id);});
@@ -120,6 +123,6 @@ export async function startSession({installRoot,stateRoot,testRoot,release,media
   error.nativeAvailable=!!client.child.pid&&!client.closed;
   throw error;
  }finally{
-  ended=true;signal?.removeEventListener('abort',abortSession);clearTimeout(watchdog);unwatchFile(configPath);ui?.close();client.disconnect();await state({running:false,mounted:false});
+  ended=true;signal?.removeEventListener('abort',abortSession);clearTimeout(watchdog);clearInterval(healthTimer);unwatchFile(configPath);ui?.close();client.disconnect();await state({running:false,mounted:false});
  }
 }

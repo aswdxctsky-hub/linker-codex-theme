@@ -6,7 +6,7 @@ import {join,dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {digest,safeVersion,REPO} from './release-store.mjs';
 
-const root=dirname(fileURLToPath(import.meta.url)),version=safeVersion(process.argv[2]||'0.6.0');
+const root=dirname(fileURLToPath(import.meta.url)),version=safeVersion(process.argv[2]||'0.7.0');
 const keyFolder=join(process.env.LOCALAPPDATA,'Linker','ReleaseSigning');await mkdir(keyFolder,{recursive:true});
 const privatePath=join(keyFolder,'release-private.pem');
 try{await access(privatePath);}catch{const keys=generateKeyPairSync('ed25519');await writeFile(privatePath,keys.privateKey.export({type:'pkcs8',format:'pem'}),{flag:'wx',mode:0o600});}
@@ -16,7 +16,8 @@ if(oldPublic&&createPublicKey(oldPublic).export({type:'spki',format:'pem'})!==pu
 await writeFile(join(root,'release-public.pem'),publicKey);
 const sources=['boot-entry.mjs','instance-lock.mjs','manager.mjs','launcher.mjs','release-store.mjs','compatibility.mjs','windows-context.mjs','windows-processes.mjs','auto-compatibility.mjs','progress-window.mjs','pipe-client.mjs','media-delivery.mjs','intro-guard.mjs','shell-contract.json'];
 const fileBytes={};for(const name of sources)fileBytes[name]=await readFile(join(root,name));
-for(const name of ['runtime.js','ProgressWindow.exe'])fileBytes[name]=await readFile(join(root,'bundle',name));
+for(const name of ['packaged-client.mjs','package-launch.ps1','updater-health.mjs','shell-capabilities.mjs'])fileBytes[name]=await readFile(join(root,name));
+for(const name of ['runtime.js','ProgressWindow.exe','PackageHost.exe'])fileBytes[name]=await readFile(join(root,'bundle',name));
 const files=Object.fromEntries(Object.entries(fileBytes).map(([name,bytes])=>[name,{sha256:digest(bytes),bytes:bytes.length}]));
 const payload={files:Object.fromEntries(Object.entries(fileBytes).map(([name,bytes])=>[name,bytes.toString('base64')]))};
 const compress=promisify(gzip),packed=await compress(Buffer.from(JSON.stringify(payload)),{level:9});

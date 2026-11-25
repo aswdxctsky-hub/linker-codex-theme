@@ -27,9 +27,9 @@ export async function runBoot(context){
    const attempt=await readJson(join(stateRoot,'boot-status.json'),null);
    if(context.verificationRollback){await activate(stateRoot,current.manifest.version);await log('rollback','release-verification');}
    else if(attempt?.version===current.manifest.version&&!attempt.ready&&pointer.previous){
-    current=await verifyVersion(await context.versionDirectory(pointer.previous),publicKey);
-    await atomicJson(join(stateRoot,'update-state.json'),{rejectedVersion:attempt.version,reason:'interrupted-startup'});
-    await activate(stateRoot,current.manifest.version);await log('rollback','interrupted-startup');
+    const previous=await verifyVersion(await context.versionDirectory(pointer.previous),publicKey);
+    if(current.manifest.files['PackageHost.exe']&&!previous.manifest.files['PackageHost.exe'])await log('rollback-rejected','previous runtime loses official package identity');
+    else{current=previous;await atomicJson(join(stateRoot,'update-state.json'),{rejectedVersion:attempt.version,reason:'interrupted-startup'});await activate(stateRoot,current.manifest.version);await log('rollback','interrupted-startup');}
    }
   }
   await log('entry-selected',entryRelease);

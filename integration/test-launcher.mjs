@@ -27,6 +27,13 @@ try{
  await invoke(['--restore']);
  result.restored=await waitFor(s=>s.mounted===false&&s.themeEnabled===false);
  const config=await readJson(join(profile,'config.json'),{});assert.equal(config.enabled,false);assert.equal(config.language,'en');
+ await run('taskkill.exe',['/PID',String(pid),'/T','/F'],{windowsHide:true});pid=null;
+ for(let i=0;i<50&&child.exitCode===null;i++)await delay(100);assert.notEqual(child.exitCode,null);
+ await run(process.execPath,args,{windowsHide:true,timeout:30000});
+ result.original=await readJson(join(profile,'state.json'),{});pid=result.original.pid;
+ assert.equal(result.original.reason,'disabled');assert.equal(result.original.mounted,false);
+ assert.ok(result.original.packageIdentity.includes('_'+result.original.packageVersion+'_'));
+ result.disabledBranchPreservesPackageIdentity=true;
  result.passed=true;
 }catch(error){result.error=error.stack;process.exitCode=1;}
 finally{
